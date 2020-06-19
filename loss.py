@@ -5,7 +5,6 @@ import torch.nn.functional as F
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
 class AddMarginLinear(nn.Module):
     def __init__(self, in_features=128, out_features=10, s=10.0, m=0.02):
         super(AddMarginLinear, self).__init__()

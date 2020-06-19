@@ -53,12 +53,9 @@ if __name__ == "__main__":
                     correct += predicted.eq(label.data).cpu().sum()
                     total += label.size(0)
 
-                    print(
-                        "Training: Epoch[{:0>3}/{:0>3}] Iteration[{:0>4}/{:0>4}] Loss: {:.4f} Acc:{:.3%} Max_x:{:.4f}".format(
-                            i_epoch + 1, opt.module_train.max_epoch, i_iter + 1, len(trainloader),
-                            sum_loss / (i_iter + 1), correct / total, torch.max(x)))
-                    f_log.write('%3d %5d | Loss: %.04f | Acc: %.03f\n' %
-                                (i_epoch + 1, i_iter + 1, sum_loss / (i_iter + 1), 100. * correct / total))
+                    print("Training: Epoch[{:0>3}/{:0>3}] Iteration[{:0>4}/{:0>4}] Loss: {:.4f} Acc:{:.3%} Max_x:{:.4f}".format(
+                        i_epoch + 1, opt.module_train.max_epoch, i_iter + 1, len(trainloader),sum_loss / (i_iter + 1), correct / total, torch.max(x)))
+                    f_log.write('%3d %5d | Loss: %.04f | Acc: %.03f\n' % (i_epoch + 1, i_iter + 1, sum_loss / (i_iter + 1), 100. * correct / total))
                     f_log.flush()
 
                 print("测试")
