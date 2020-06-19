@@ -3,43 +3,32 @@ import torch.nn as nn
 from torch.nn import Parameter
 import torch.nn.functional as F
 
-class Loss(nn.Module):
-    def __init__(self, s=None, m=None):
-        super(Loss, self).__init__()
-        self.s = s
-        self.m = m
-
-    def forward(self, x, label):
-        assert len(x) == len(label), "样本维度和label长度不一致"
-
-        numerator = self.s * (torch.diagonal(x.transpose(0, 1)[label]) - self.m)
-
-        excl = torch.cat([torch.cat((x[i, :y], x[i, y + 1:])).unsqueeze(0) for i, y in enumerate(label)], dim=0)
-        denominator = torch.exp(numerator) + torch.sum(torch.exp(self.s * excl), dim=1)
-        L = (numerator - torch.log(denominator))/self.s
-        return -torch.mean(L)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-class AddMarginProduct(nn.Module):
-    def __init__(self, in_features=128, out_features=10, s=100.0, m=0.02):
-        super(AddMarginProduct, self).__init__()
+class AddMarginLinear(nn.Module):
+    def __init__(self, in_features=128, out_features=10, s=10.0, m=0.02):
+        super(AddMarginLinear, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.s = s
         self.m = m
-        self.weight = Parameter(torch.FloatTensor(out_features, in_features))
+        self.weight = Parameter(torch.FloatTensor(out_features, in_features)).to(device)
         nn.init.xavier_uniform_(self.weight)
 
-    def forward(self, input, label, epoch):
-        # --------------------------- cos(theta) & phi(theta) ---------------------------
-        cosine = F.linear(F.normalize(input), F.normalize(self.weight))
-        phi = cosine - self.m*(epoch % 10 +1)
-        # --------------------------- convert label to one-hot ---------------------------
-        one_hot = torch.zeros(cosine.size())
-        one_hot.scatter_(1, label.view(-1, 1).long(), 1)
-        # -------------torch.where(out_i = {x_i if condition_i else y_i) -------------
-        output = (one_hot * phi) + ((1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
-        output *= self.s
+    def forward(self, input, label, epoch, is_train=True):
+        assert len(input) == len(label), "样本维度和label长度不一致"
+
+        if is_train:
+            cosine = F.linear(F.normalize(input), F.normalize(self.weight))
+            phi = cosine - self.m * (epoch % 10 + 1)
+            one_hot = torch.zeros(cosine.size(), device=device)
+            one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+            output = (one_hot * phi) + (
+                        (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
+            output *= self.s
+        else:
+            output = F.linear(F.normalize(input), F.normalize(self.weight))
 
         return output
 

@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
+
 class Modules(nn.Module):
     def __init__(self, opt):
         super(Modules, self).__init__()
@@ -22,7 +23,7 @@ class Modules(nn.Module):
             nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
-            nn.AvgPool2d(kernel_size=3, stride= 2, padding=1)
+            nn.AvgPool2d(kernel_size=3, stride=2, padding=1)
         )
         self.conv4 = nn.Sequential(
             nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1, bias=False),
@@ -54,4 +55,3 @@ class Modules(nn.Module):
         # x = self.fc2(x)
 
         return x
-
