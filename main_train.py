@@ -6,7 +6,8 @@ from torch.utils.data import DataLoader
 from models import Modules
 import torch.nn as nn
 import torch.optim as optim
-from loss import Loss
+from loss import Loss, AddMarginProduct
+import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -23,7 +24,7 @@ opt.read_data.train.transforms = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
 ])
-opt.read_data.train.batch_size = 200
+opt.read_data.train.batch_size = 500
 opt.read_data.train.shuffle = True
 
 opt.read_data.test = edict()
@@ -32,7 +33,7 @@ opt.read_data.test.transforms = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
 ])
-opt.read_data.test.batch_size = 100
+opt.read_data.test.batch_size = 500
 opt.read_data.test.shuffle = False
 
 opt.module_train = edict()
@@ -54,8 +55,9 @@ testloader = DataLoader(testset, batch_size=read_test.batch_size, shuffle=read_t
 net = Modules(opt).to(device)
 
 #========================    初始化优化器 =======================
-# criterion = nn.CrossEntropyLoss()
-criterion = Loss(s=100, m=0.2)
+XX = AddMarginProduct(s=10, m=0.01)
+criterion = nn.CrossEntropyLoss()
+# criterion = Loss(s=100, m=0.25)
 optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9, weight_decay=5e-4)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.1)
 
@@ -75,17 +77,19 @@ if __name__=="__main__":
                     optimizer.zero_grad()
 
                     x = net(img)
+                    x = XX(x, label, i_epoch)
                     loss = criterion(x, label)
                     loss.backward()
                     optimizer.step()
 
                     sum_loss += loss.item()
-                    _, predicted = torch.max(x.data, 1)
-                    total += label.size(0)
-                    correct += predicted.eq(label.data).cpu().sum()
 
-                    print("Training: Epoch[{:0>3}/{:0>3}] Iteration[{:0>4}/{:0>4}] Loss: {:.4f} Acc:{:.3%}".format(
-                        i_epoch + 1, opt.module_train.max_epoch, i_iter + 1, len(trainloader), sum_loss / (i_iter + 1), correct / total))
+                    _, predicted = torch.max(x.data, 1)
+                    correct += predicted.eq(label.data).cpu().sum()
+                    total += label.size(0)
+
+                    print("Training: Epoch[{:0>3}/{:0>3}] Iteration[{:0>4}/{:0>4}] Loss: {:.4f} Acc:{:.3%} Max_x:{:.4f}".format(
+                        i_epoch + 1, opt.module_train.max_epoch, i_iter + 1, len(trainloader), sum_loss / (i_iter + 1), correct / total, torch.max(x)))
                     f_log.write('%3d %5d | Loss: %.04f | Acc: %.03f\n' %
                                 (i_epoch + 1, i_iter + 1, sum_loss / (i_iter + 1), 100.*correct / total))
                     f_log.flush()

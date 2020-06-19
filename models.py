@@ -1,5 +1,7 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch
 
 class Modules(nn.Module):
     def __init__(self, opt):
@@ -48,11 +50,7 @@ class Modules(nn.Module):
         x = self.conv5(x)
         x = x.view(x.size(0), -1)
         x = self.fc1(x)
-
-        for w in self.fc2.parameters():
-            w = F.normalize(w)
-        x = F.normalize(x)
-        x = self.fc2(x)
+        # x = self.fc2(x)
 
         return x
 
