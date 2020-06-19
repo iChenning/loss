@@ -33,7 +33,6 @@ class AddMarginProduct(nn.Module):
     def forward(self, input, label, epoch):
         # --------------------------- cos(theta) & phi(theta) ---------------------------
         cosine = F.linear(F.normalize(input), F.normalize(self.weight))
-        # cosine = F.linear(input, self.weight)
         phi = cosine - self.m*(epoch % 10 +1)
         # --------------------------- convert label to one-hot ---------------------------
         one_hot = torch.zeros(cosine.size())

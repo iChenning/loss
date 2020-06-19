@@ -78,6 +78,7 @@ if __name__=="__main__":
 
                     x = net(img)
                     x = XX(x, label, i_epoch)
+
                     loss = criterion(x, label)
                     loss.backward()
                     optimizer.step()
