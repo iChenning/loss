@@ -3,10 +3,11 @@ import torch.nn as nn
 from torch.nn import Parameter
 import torch.nn.functional as F
 
+# device = torch.device("cpu")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class AddMarginLinear(nn.Module):
-    def __init__(self, in_features=128, out_features=10, s=10.0, m=0.02):
+    def __init__(self, in_features=128, out_features=10, s=10.0, m=0.01):
         super(AddMarginLinear, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -19,13 +20,16 @@ class AddMarginLinear(nn.Module):
         assert len(input) == len(label), "样本维度和label长度不一致"
 
         if is_train:
-            cosine = F.linear(F.normalize(input), F.normalize(self.weight))
-            phi = cosine - self.m * (epoch % 10 + 1)
-            one_hot = torch.zeros(cosine.size(), device=device)
-            one_hot.scatter_(1, label.view(-1, 1).long(), 1)
-            output = (one_hot * phi) + (
-                        (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
-            output *= self.s
+            if epoch % 2 == 0:
+                cosine = F.linear(F.normalize(input), F.normalize(self.weight))
+                phi = cosine - self.m * (epoch % 10 + 1)
+                one_hot = torch.zeros(cosine.size(), device=device)
+                one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+                output = (one_hot * phi) + (
+                            (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
+                output *= self.s
+            else:
+                output = F.linear(F.normalize(input), F.normalize(self.weight))
         else:
             output = F.linear(F.normalize(input), F.normalize(self.weight))
 

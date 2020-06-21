@@ -29,7 +29,7 @@ opt.read_data.test.shuffle = False
 
 # ========================   训练       ============================
 opt.module_train = edict()
-opt.module_train.max_epoch = 100
+opt.module_train.max_epoch = 200
 
 # ========================   保存       ============================
 opt.module_save = edict()
