@@ -5,45 +5,55 @@ from models import Modules, Res5
 import torch.nn as nn
 import torch.optim as optim
 from loss import AddMarginLinear
-from config import opt
+# from config import opt
 import torchvision.models as models
 import time
 from datetime import datetime
 from tensorboardX import SummaryWriter
 import os
+import argparse
+from importlib.machinery import SourceFileLoader
 
 # device = torch.device("cpu")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.backends.cudnn.benchmark = True
 
-# ========================    数据读取    =========================
-read_train = opt.read_data.train
-trainset = MyDataset(txt_path=read_train.file_path, transform=read_train.transforms)
-trainloader = DataLoader(trainset, batch_size=read_train.batch_size, shuffle=read_train.shuffle)
-read_test = opt.read_data.test
-testset = MyDataset(txt_path=read_test.file_path, transform=read_test.transforms)
-testloader = DataLoader(testset, batch_size=read_test.batch_size, shuffle=read_test.shuffle)
-
-# ========================    导入网络    ========================
-# net = Modules(opt).to(device)
-net = models.resnet18(pretrained=False, num_classes=128).to(device)
-fc = AddMarginLinear(s=opt.module_train.margin_s, m=opt.module_train.margin_m)
-
-# ========================    初始化优化器 =======================
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0003)
-scheduler = optim.lr_scheduler.MultiStepLR(optimizer, opt.lr_mul, gamma=opt.lr_gamma)
-
-now_time = datetime.now()
-time_str = datetime.strftime(now_time, '%m-%d_%H-%M-%S')
-name = 'resnet18-softmax'
-log_dir = os.path.join('log', name)
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-writer = SummaryWriter(log_dir=log_dir)
 
 # ========================    开始训练    ========================
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser("Loss training with Pytorch")
+    parser.add_argument("--config", help="config file", required=True)
+    args = parser.parse_args()
+    assert os.path.exists(args.config), args.config
+    opt = SourceFileLoader('module.name', args.config).load_module().opt
+
+    # ========================    数据读取    =========================
+    read_train = opt.read_data.train
+    trainset = MyDataset(txt_path=read_train.file_path, transform=read_train.transforms)
+    trainloader = DataLoader(trainset, batch_size=read_train.batch_size, shuffle=read_train.shuffle)
+    read_test = opt.read_data.test
+    testset = MyDataset(txt_path=read_test.file_path, transform=read_test.transforms)
+    testloader = DataLoader(testset, batch_size=read_test.batch_size, shuffle=read_test.shuffle)
+
+    # ========================    导入网络    ========================
+    net = Modules(opt).to(device)
+    # net = models.resnet18(pretrained=False, num_classes=128).to(device)
+    fc = AddMarginLinear(s=opt.module_train.margin_s, m=opt.module_train.margin_m)
+
+    # ========================    初始化优化器 =======================
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0003)
+    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, opt.lr_mul, gamma=opt.lr_gamma)
+
+    now_time = datetime.now()
+    time_str = datetime.strftime(now_time, '%m-%d_%H-%M-%S')
+    name = 'net5-softmax'
+    log_dir = os.path.join('log', name)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    writer = SummaryWriter(log_dir=log_dir)
+
+    # ========================   训练及测试   =======================
     best_acc = 0.0
     for i_epoch in range(opt.module_train.max_epoch):
         net.train()
@@ -57,12 +67,15 @@ if __name__ == "__main__":
             optimizer.zero_grad()
 
             feature = net(img)
-            x = fc(feature, label, i_epoch, is_train=True)
+            x = fc(feature, label, opt, i_epoch, is_train=True, is_softmax=opt.is_softmax)
 
-            if (i_epoch % 4 + i_epoch % 2) % 4 == 0:
+            if opt.is_softmax:
                 loss = criterion(x, label)
             else:
-                loss = criterion(x, label) / opt.module_train.margin_s
+                if (i_epoch % (2 * opt.inter) + i_epoch % opt.inter) % (2 * opt.inter) == 0:
+                    loss = criterion(x, label)
+                else:
+                    loss = criterion(x, label) / opt.module_train.margin_s
             loss.backward()
             optimizer.step()
 
@@ -87,7 +100,7 @@ if __name__ == "__main__":
             writer.add_scalars('Loss_group', {'train_loss': sum_loss / (i_iter + 1)}, i_epoch * len(trainloader) + i_iter)
             writer.add_scalar('learning rate', scheduler.get_lr()[0], i_epoch * len(trainloader) + i_iter)
             writer.add_scalars('Accuracy_group', {'train_acc': correct / total}, i_epoch * len(trainloader) + i_iter)
-            if (i_epoch % 4 + i_epoch % 2) % 4 == 0:
+            if (i_epoch % (2 * opt.inter) + i_epoch % opt.inter) % (2 * opt.inter) == 0:
                 one_hot = torch.zeros(x.size(), device=device)
                 one_hot.scatter_(1, label.view(-1, 1).long(), 1)
                 x_s = x * one_hot
@@ -106,7 +119,7 @@ if __name__ == "__main__":
                 writer.add_scalars('x_group', {'neg_x_max': torch.max(x_s) / opt.module_train.margin_s}, i_epoch * len(trainloader) + i_iter)
                 writer.add_scalars('x_group', {'neg_x_min': torch.min(x_s) / opt.module_train.margin_s}, i_epoch * len(trainloader) + i_iter)
 
-        print("测试")
+        print("测试...")
         with torch.no_grad():
             correct = 0
             total = 0
@@ -115,7 +128,7 @@ if __name__ == "__main__":
                 img, label = data
                 img, label = img.to(device), label.to(device)
                 feature = net(img)
-                x = fc(feature, label, i_epoch, is_train=False)
+                x = fc(feature, label, opt, i_epoch, is_train=False)
 
                 _, predicted = torch.max(x.data, 1)
                 total += label.size(0)

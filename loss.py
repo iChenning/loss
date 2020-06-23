@@ -16,29 +16,32 @@ class AddMarginLinear(nn.Module):
         self.weight = Parameter(torch.FloatTensor(out_features, in_features)).to(device)
         nn.init.xavier_uniform_(self.weight)
 
-    def forward(self, input, label, epoch, is_train=True):
+    def forward(self, input, label, opt, epoch, is_train=True, is_softmax=True):
         assert len(input) == len(label), "样本维度和label长度不一致"
 
         if is_train:
-            if (epoch % 4 + epoch % 2) % 4 == 0:
+            if is_softmax:
                 output = F.linear(F.normalize(input), F.normalize(self.weight))
             else:
-                cosine = F.linear(F.normalize(input), F.normalize(self.weight))
-                phi = cosine - self.m * (epoch % 10 + 1)
-                one_hot = torch.zeros(cosine.size(), device=device)
-                one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+                if (epoch % (2 * opt.inter) + epoch % opt.inter) % (2 * opt.inter) == 0:
+                    output = F.linear(F.normalize(input), F.normalize(self.weight))
+                else:
+                    cosine = F.linear(F.normalize(input), F.normalize(self.weight))
+                    phi = cosine - self.m * (epoch % 10 + 1)
+                    one_hot = torch.zeros(cosine.size(), device=device)
+                    one_hot.scatter_(1, label.view(-1, 1).long(), 1)
 
-                # one_hot = torch.zeros(cosine.size(), device=device)
-                # one_hot.scatter_(1, label.view(-1, 1).long(), 1)
-                # cosine_s = cosine * one_hot
-                # pos_min = torch.min(cosine_s).item()
-                # cosine_s = cosine * (1.0 - one_hot)
-                # neg_max = torch.max(cosine_s).item()
-                # phi = cosine - (neg_max - pos_min)
+                    # one_hot = torch.zeros(cosine.size(), device=device)
+                    # one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+                    # cosine_s = cosine * one_hot
+                    # pos_min = torch.min(cosine_s).item()
+                    # cosine_s = cosine * (1.0 - one_hot)
+                    # neg_max = torch.max(cosine_s).item()
+                    # phi = cosine - (neg_max - pos_min)
 
-                output = (one_hot * phi) + (
-                        (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
-                output *= self.s
+                    output = (one_hot * phi) + (
+                            (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
+                    output *= self.s
         else:
             output = F.linear(F.normalize(input), F.normalize(self.weight))
 
