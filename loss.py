@@ -20,16 +20,25 @@ class AddMarginLinear(nn.Module):
         assert len(input) == len(label), "样本维度和label长度不一致"
 
         if is_train:
-            if epoch % 2 == 0:
+            if (epoch % 4 + epoch % 2) % 4 == 0:
+                output = F.linear(F.normalize(input), F.normalize(self.weight))
+            else:
                 cosine = F.linear(F.normalize(input), F.normalize(self.weight))
                 phi = cosine - self.m * (epoch % 10 + 1)
                 one_hot = torch.zeros(cosine.size(), device=device)
                 one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+
+                # one_hot = torch.zeros(cosine.size(), device=device)
+                # one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+                # cosine_s = cosine * one_hot
+                # pos_min = torch.min(cosine_s).item()
+                # cosine_s = cosine * (1.0 - one_hot)
+                # neg_max = torch.max(cosine_s).item()
+                # phi = cosine - (neg_max - pos_min)
+
                 output = (one_hot * phi) + (
-                            (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
+                        (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
                 output *= self.s
-            else:
-                output = F.linear(F.normalize(input), F.normalize(self.weight))
         else:
             output = F.linear(F.normalize(input), F.normalize(self.weight))
 
