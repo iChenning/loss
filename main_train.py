@@ -2,12 +2,10 @@ import torch
 from my_dataset import MyDataset, data_prefetcher
 from torch.utils.data import DataLoader
 from models import Modules, Res5
+from models_resnet50 import resnet50
 import torch.nn as nn
 import torch.optim as optim
 from loss import AddMarginLinear
-# from config import opt
-import torchvision.models as models
-import time
 from datetime import datetime
 from tensorboardX import SummaryWriter
 import os
@@ -36,8 +34,8 @@ if __name__ == "__main__":
     testloader = DataLoader(testset, batch_size=read_test.batch_size, shuffle=read_test.shuffle)
 
     # ========================    导入网络    ========================
-    net = Modules(opt).to(device)
-    # net = models.resnet18(pretrained=False, num_classes=128).to(device)
+    # net = Modules(opt).to(device)
+    net = resnet50().to(device)
     fc = AddMarginLinear(s=opt.module_train.margin_s, m=opt.module_train.margin_m)
 
     # ========================    初始化优化器 =======================
@@ -47,14 +45,14 @@ if __name__ == "__main__":
 
     now_time = datetime.now()
     time_str = datetime.strftime(now_time, '%m-%d_%H-%M-%S')
-    name = 'net5-softmax'
+    name = 'resnet50-softmax'
     log_dir = os.path.join('log', name)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     writer = SummaryWriter(log_dir=log_dir)
 
     # ========================   训练及测试   =======================
-    best_acc = 0.0
+    best_acc = 0.80
     for i_epoch in range(opt.module_train.max_epoch):
         net.train()
         sum_loss = 0.0
@@ -143,7 +141,7 @@ if __name__ == "__main__":
             torch.save(net.state_dict(), '%s/net_%03d.pth' % (opt.module_save.path, i_epoch + 1))
 
             if acc > best_acc:
-                f_best_acc = open("best_acc.txt", 'w')
+                f_best_acc = open("best_acc-resnet50-softmax.txt", 'w')
                 f_best_acc.write("EPOCH=%d,best_acc= %.3f%%" % (i_epoch + 1, acc * 100.0))
                 f_best_acc.close()
                 best_acc = acc

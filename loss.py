@@ -27,18 +27,9 @@ class AddMarginLinear(nn.Module):
                     output = F.linear(F.normalize(input), F.normalize(self.weight))
                 else:
                     cosine = F.linear(F.normalize(input), F.normalize(self.weight))
-                    phi = cosine - self.m * (epoch % 10 + 1)
+                    phi = cosine - self.m * (epoch // 10 + 1)
                     one_hot = torch.zeros(cosine.size(), device=device)
                     one_hot.scatter_(1, label.view(-1, 1).long(), 1)
-
-                    # one_hot = torch.zeros(cosine.size(), device=device)
-                    # one_hot.scatter_(1, label.view(-1, 1).long(), 1)
-                    # cosine_s = cosine * one_hot
-                    # pos_min = torch.min(cosine_s).item()
-                    # cosine_s = cosine * (1.0 - one_hot)
-                    # neg_max = torch.max(cosine_s).item()
-                    # phi = cosine - (neg_max - pos_min)
-
                     output = (one_hot * phi) + (
                             (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
                     output *= self.s
@@ -53,3 +44,28 @@ class AddMarginLinear(nn.Module):
                + ', out_features=' + str(self.out_features) \
                + ', s=' + str(self.s) \
                + ', m=' + str(self.m) + ')'
+
+
+class CenterLoss(nn.Module):
+    def __init__(self, in_features=128, out_features=10):
+        super(CenterLoss, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.weight = Parameter(torch.FloatTensor(out_features, in_features)).to(device)
+        nn.init.xavier_uniform_(self.weight)
+
+    def forward(self, input, label, is_train=True):
+        assert len(input) == len(label), "样本维度和label长度不一致"
+
+        if is_train:
+            cosine = F.linear(F.normalize(input), F.normalize(self.weight))
+            one_hot = torch.zeros(cosine.size(), device=device)
+            one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+            cosine_s = cosine * one_hot
+            loss_center = (torch.sum(torch.sqrt(torch.tensor(2.) - cosine_s * torch.tensor(2.))) -
+                           torch.sqrt(torch.tensor(2.)) * (cosine.size(0) * cosine.size(1) - cosine.size(0))) / cosine.size(0)
+            return (cosine, loss_center)
+        else:
+            output = F.linear(F.normalize(input), F.normalize(self.weight))
+            return output
+
