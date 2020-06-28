@@ -31,12 +31,10 @@ if __name__ == "__main__":
     # trainset = MyDataset(txt_path=read_train.file_path, transform=read_train.transforms)
     trainset = torchvision.datasets.CIFAR10(root='./Data', train=True, download=False, transform=read_train.transforms)  # 训练数据集
     trainloader = DataLoader(trainset, batch_size=read_train.batch_size, shuffle=read_train.shuffle)
-    trainloader_pre = data_prefetcher(trainloader)
     read_test = opt.read_data.test
     # testset = MyDataset(txt_path=read_test.file_path, transform=read_test.transforms)
     testset = torchvision.datasets.CIFAR10(root='./Data', train=False, download=False, transform=read_test.transforms)
     testloader = DataLoader(testset, batch_size=read_test.batch_size, shuffle=read_test.shuffle)
-    testloader_pre = data_prefetcher(testloader)
 
     # ========================    导入网络    ========================
     if opt.train.net == 'Net5':
@@ -76,6 +74,7 @@ if __name__ == "__main__":
         optimizer.zero_grad()
         scheduler.step()
 
+        trainloader_pre = data_prefetcher(trainloader)
         img, label = trainloader_pre.next()
         i_iter = 0
         while img is not None:
@@ -122,6 +121,7 @@ if __name__ == "__main__":
         with torch.no_grad():
             correct = 0
             total = 0
+            testloader_pre = data_prefetcher(testloader)
             img, label = testloader_pre.next()
             while img is not None:
                 net.eval()
@@ -132,6 +132,9 @@ if __name__ == "__main__":
                 _, predicted = torch.max(x.data, 1)
                 total += label.size(0)
                 correct += (predicted == label).sum().item()
+
+                img, label = testloader_pre.next()
+
             print('测试分类准确率为：%.3f%%' % (100 * correct / total))
             acc = correct / total
 
@@ -146,7 +149,5 @@ if __name__ == "__main__":
                 f_best_acc.write("EPOCH=%d,best_acc= %.3f%%" % (i_epoch + 1, acc * 100.0))
                 f_best_acc.close()
                 best_acc = acc
-
-            img, label = testloader_pre.next()
 
     print("训练完成")
