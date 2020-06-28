@@ -3,7 +3,6 @@ import torch.nn as nn
 from torch.nn import Parameter
 import torch.nn.functional as F
 
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -19,42 +18,41 @@ class Dot(nn.Module):
             output = self.fc(input)
         return output
 
+
 class Cos(nn.Module):
-    def __int__(self, in_features=128, out_features=10):
+    def __init__(self, in_features=128, out_features=10):
         super(Cos, self).__init__()
         self.fc = Parameter(torch.FloatTensor(out_features, in_features)).to(device)
-        nn.init.xavier_uniform_(self.weight)
+        nn.init.xavier_uniform_(self.fc)
 
     def forward(self, input, label, is_train=True):
         if is_train:
-            output = F.linear(F.normalize(input), F.normalize(self.fc), bias=False)
+            output = F.linear(F.normalize(input), F.normalize(self.fc))
         else:
-            output = F.linear(F.normalize(input), F.normalize(self.fc), bias=False)
+            output = F.linear(F.normalize(input), F.normalize(self.fc))
         return output
 
 
 class CosAddMargin(nn.Module):
-    def __init__(self, in_features, out_features, s=30.0, m=0.2):
+    def __init__(self, in_features=128, out_features=10, s=30.0, m=0.2):
         super(CosAddMargin, self).__init__()
         self.m = m
         self.s = s
         self.fc = Parameter(torch.FloatTensor(out_features, in_features)).to(device)
-        nn.init.xavier_uniform_(self.weight)
+        nn.init.xavier_uniform_(self.fc)
 
     def forward(self, input, label, is_train=True):
         if is_train:
-            cosine = F.linear(F.normalize(input), F.normalize(self.fc), bias=False)
+            cosine = F.linear(F.normalize(input), F.normalize(self.fc))
             phi = cosine - self.m
             one_hot = torch.zeros(cosine.size(), device=device)
             one_hot.scatter_(1, label.view(-1, 1).long(), 1)
-            output = (one_hot * phi) + ((1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
+            output = (one_hot * phi) + (
+                        (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
             output *= self.s
         else:
-            output = F.linear(F.normalize(input), F.normalize(self.fc), bias=False)
+            output = F.linear(F.normalize(input), F.normalize(self.fc))
         return output
-
-
-
 
 
 class AddMarginLinear(nn.Module):
@@ -114,9 +112,9 @@ class CenterLoss(nn.Module):
             one_hot.scatter_(1, label.view(-1, 1).long(), 1)
             cosine_s = cosine * one_hot
             loss_center = (torch.sum(torch.sqrt(torch.tensor(2.) - cosine_s * torch.tensor(2.))) -
-                           torch.sqrt(torch.tensor(2.)) * (cosine.size(0) * cosine.size(1) - cosine.size(0))) / cosine.size(0)
+                           torch.sqrt(torch.tensor(2.)) * (
+                                       cosine.size(0) * cosine.size(1) - cosine.size(0))) / cosine.size(0)
             return (cosine, loss_center)
         else:
             output = F.linear(F.normalize(input), F.normalize(self.weight))
             return output
-

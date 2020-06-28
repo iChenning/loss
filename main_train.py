@@ -1,4 +1,4 @@
-from utils.my_dataset import MyDataset
+from utils.my_dataset import MyDataset, data_prefetcher
 import torchvision
 from torch.utils.data import DataLoader
 import torch
@@ -31,10 +31,12 @@ if __name__ == "__main__":
     # trainset = MyDataset(txt_path=read_train.file_path, transform=read_train.transforms)
     trainset = torchvision.datasets.CIFAR10(root='./Data', train=True, download=False, transform=read_train.transforms)  # 训练数据集
     trainloader = DataLoader(trainset, batch_size=read_train.batch_size, shuffle=read_train.shuffle)
+    trainloader_pre = data_prefetcher(trainloader)
     read_test = opt.read_data.test
     # testset = MyDataset(txt_path=read_test.file_path, transform=read_test.transforms)
     testset = torchvision.datasets.CIFAR10(root='./Data', train=False, download=False, transform=read_test.transforms)
     testloader = DataLoader(testset, batch_size=read_test.batch_size, shuffle=read_test.shuffle)
+    testloader_pre = data_prefetcher(testloader)
 
     # ========================    导入网络    ========================
     if opt.train.net == 'Net5':
@@ -105,11 +107,11 @@ if __name__ == "__main__":
             one_hot = torch.zeros(x.size(), device=device)
             one_hot.scatter_(1, label.view(-1, 1).long(), 1)
             x_s = x * one_hot
-            writer.add_scalars('x_group', {'pos_x_max': torch.max(x_s) / opt.train.margin_s}, i_epoch * len(trainloader) + i_iter)
-            writer.add_scalars('x_group', {'pos_x_min': torch.min(x_s) / opt.train.margin_s}, i_epoch * len(trainloader) + i_iter)
+            writer.add_scalars('x_group', {'pos_x_max': torch.max(x_s)}, i_epoch * len(trainloader) + i_iter)
+            writer.add_scalars('x_group', {'pos_x_min': torch.min(x_s)}, i_epoch * len(trainloader) + i_iter)
             x_s = x * (1.0 - one_hot)
-            writer.add_scalars('x_group', {'neg_x_max': torch.max(x_s) / opt.train.margin_s}, i_epoch * len(trainloader) + i_iter)
-            writer.add_scalars('x_group', {'neg_x_min': torch.min(x_s) / opt.train.margin_s}, i_epoch * len(trainloader) + i_iter)
+            writer.add_scalars('x_group', {'neg_x_max': torch.max(x_s)}, i_epoch * len(trainloader) + i_iter)
+            writer.add_scalars('x_group', {'neg_x_min': torch.min(x_s)}, i_epoch * len(trainloader) + i_iter)
 
         print("测试...")
         with torch.no_grad():
