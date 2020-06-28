@@ -6,9 +6,8 @@ import torchvision.transforms as transforms
 import argparse
 from torch.utils.data import Dataset
 from PIL import Image
-import os
-from resnet import ResNet18
-from loss import AddMarginLinear
+from moduls.modul_resnet22 import ResNet18
+from moduls.fc_weight import AddMarginLinear
 from config import opt
 
 # 定义是否使用GPU
@@ -84,7 +83,7 @@ fc = AddMarginLinear(s=30, m=0.01)
 # 定义损失函数和优化方式
 criterion = nn.CrossEntropyLoss()  #损失函数为交叉熵，多用于多分类问题
 optimizer = optim.SGD(net.parameters(), lr=LR, momentum=0.9, weight_decay=5e-4) #优化方式为mini-batch momentum-SGD，并采用L2正则化（权重衰减）
-scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [135,185], gamma=0.1)
+scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [75,115], gamma=0.1)
 
 # 训练
 if __name__ == "__main__":

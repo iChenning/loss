@@ -1,13 +1,11 @@
 import torch
-from my_dataset import MyDataset, data_prefetcher
+from utils.my_dataset import MyDataset
 from torch.utils.data import DataLoader
-from models import Modules, Res5
 from models_resnet50 import resnet50
 import torch.nn as nn
 import torch.optim as optim
-from loss import CenterLoss
+from moduls.fc_weight import CenterLoss
 # from config import opt
-import time
 from datetime import datetime
 from tensorboardX import SummaryWriter
 import os

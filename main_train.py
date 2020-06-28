@@ -1,19 +1,19 @@
-import torch
-from my_dataset import MyDataset, data_prefetcher
+from utils.my_dataset import MyDataset
+import torchvision
 from torch.utils.data import DataLoader
-from models import Modules, Res5
-from models_resnet50 import resnet50
+import torch
 import torch.nn as nn
 import torch.optim as optim
-from loss import AddMarginLinear
 from datetime import datetime
 from tensorboardX import SummaryWriter
 import os
 import argparse
 from importlib.machinery import SourceFileLoader
-import torchvision
+from moduls.modul_net5 import Net5
+from moduls.modul_resnet22 import ResNet22
+from moduls.fc_weight import Dot, Cos, CosAddMargin
 
-# device = torch.device("cpu")
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.backends.cudnn.benchmark = True
 
@@ -37,47 +37,50 @@ if __name__ == "__main__":
     testloader = DataLoader(testset, batch_size=read_test.batch_size, shuffle=read_test.shuffle)
 
     # ========================    导入网络    ========================
-    # net = Modules(opt).to(device)
-    net = resnet50().to(device)
-    fc = AddMarginLinear(s=opt.module_train.margin_s, m=opt.module_train.margin_m)
+    if opt.train.net == 'Net5':
+        net = Net5(opt).to(device)
+    else:
+        net = ResNet22().to(device)
+
+    if opt.train.fc_type == 'Cos':
+        fc = Cos()
+    elif opt.train.fc_type == 'CosAddMargin':
+        fc = CosAddMargin()
+    else:
+        fc = Dot()
 
     # ========================    初始化优化器 =======================
-    criterion = nn.CrossEntropyLoss()
+    if 'Margin' in opt.train.fc_type:
+        criterion = nn.CrossEntropyLoss()
+    else:
+        criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0003)
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, opt.lr_mul, gamma=opt.lr_gamma)
 
     now_time = datetime.now()
     time_str = datetime.strftime(now_time, '%m-%d_%H-%M-%S')
-    name = 'resnet50-数据'
-    log_dir = os.path.join('log', name)
+    log_dir = os.path.join('log', time_str + '_' + opt.train.net + '-' + opt.train.fc_type)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     writer = SummaryWriter(log_dir=log_dir)
 
     # ========================   训练及测试   =======================
-    best_acc = 0.80
-    for i_epoch in range(opt.module_train.max_epoch):
+    best_acc = 0.60
+    for i_epoch in range(opt.train.max_epoch):
         net.train()
         sum_loss = 0.0
         correct = 0.0
         total = 0.0
+        optimizer.zero_grad()
         scheduler.step()
         for i_iter, data in enumerate(trainloader):
             img, label = data
             img, label = img.to(device), label.to(device)
             optimizer.zero_grad()
 
-            # feature = net(img)
-            # x = fc(feature, label, opt, i_epoch, is_train=True, is_softmax=opt.is_softmax)
-            #
-            # if opt.is_softmax:
-            #     loss = criterion(x, label)
-            # else:
-            #     if (i_epoch % (2 * opt.inter) + i_epoch % opt.inter) % (2 * opt.inter) == 0:
-            #         loss = criterion(x, label)
-            #     else:
-            #         loss = criterion(x, label) / opt.module_train.margin_s
-            x = net(img)
+            feature = net(img)
+            x = fc(feature, label, is_train=True)
+
             loss = criterion(x, label)
             loss.backward()
             optimizer.step()
@@ -88,39 +91,25 @@ if __name__ == "__main__":
             total += label.size(0)
 
             print("Training: Epoch[{:0>3}/{:0>3}] "
-                  "Iteration[{:0>4}/{:0>4}] "
+                  "Iteration[{:0>3}/{:0>3}] "
                   "Loss: {:.4f} "
-                  "Acc:{:.3%} "
-                  "Max_x:{:.2f} "
-                  "Min_x:{:.2f}".format(
-                i_epoch + 1, opt.module_train.max_epoch,
+                  "Acc:{:.3%} ".format(
+                i_epoch + 1, opt.train.max_epoch,
                 i_iter + 1, len(trainloader),
                 sum_loss / (i_iter + 1),
-                correct / total,
-                torch.max(x),
-                torch.min(x)))
+                correct / total))
 
             writer.add_scalars('Loss_group', {'train_loss': sum_loss / (i_iter + 1)}, i_epoch * len(trainloader) + i_iter)
             writer.add_scalar('learning rate', scheduler.get_lr()[0], i_epoch * len(trainloader) + i_iter)
             writer.add_scalars('Accuracy_group', {'train_acc': correct / total}, i_epoch * len(trainloader) + i_iter)
-            if (i_epoch % (2 * opt.inter) + i_epoch % opt.inter) % (2 * opt.inter) == 0:
-                one_hot = torch.zeros(x.size(), device=device)
-                one_hot.scatter_(1, label.view(-1, 1).long(), 1)
-                x_s = x * one_hot
-                writer.add_scalars('x_group', {'pos_x_max': torch.max(x_s)}, i_epoch * len(trainloader) + i_iter)
-                writer.add_scalars('x_group', {'pos_x_min': torch.min(x_s)}, i_epoch * len(trainloader) + i_iter)
-                x_s = x * (1.0 - one_hot)
-                writer.add_scalars('x_group', {'neg_x_max': torch.max(x_s)}, i_epoch * len(trainloader) + i_iter)
-                writer.add_scalars('x_group', {'neg_x_min': torch.min(x_s)}, i_epoch * len(trainloader) + i_iter)
-            else:
-                one_hot = torch.zeros(x.size(), device=device)
-                one_hot.scatter_(1, label.view(-1, 1).long(), 1)
-                x_s = x * one_hot
-                writer.add_scalars('x_group', {'pos_x_max': torch.max(x_s) / opt.module_train.margin_s}, i_epoch * len(trainloader) + i_iter)
-                writer.add_scalars('x_group', {'pos_x_min': torch.min(x_s) / opt.module_train.margin_s}, i_epoch * len(trainloader) + i_iter)
-                x_s = x * (1.0 - one_hot)
-                writer.add_scalars('x_group', {'neg_x_max': torch.max(x_s) / opt.module_train.margin_s}, i_epoch * len(trainloader) + i_iter)
-                writer.add_scalars('x_group', {'neg_x_min': torch.min(x_s) / opt.module_train.margin_s}, i_epoch * len(trainloader) + i_iter)
+            one_hot = torch.zeros(x.size(), device=device)
+            one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+            x_s = x * one_hot
+            writer.add_scalars('x_group', {'pos_x_max': torch.max(x_s) / opt.train.margin_s}, i_epoch * len(trainloader) + i_iter)
+            writer.add_scalars('x_group', {'pos_x_min': torch.min(x_s) / opt.train.margin_s}, i_epoch * len(trainloader) + i_iter)
+            x_s = x * (1.0 - one_hot)
+            writer.add_scalars('x_group', {'neg_x_max': torch.max(x_s) / opt.train.margin_s}, i_epoch * len(trainloader) + i_iter)
+            writer.add_scalars('x_group', {'neg_x_min': torch.min(x_s) / opt.train.margin_s}, i_epoch * len(trainloader) + i_iter)
 
         print("测试...")
         with torch.no_grad():
@@ -131,9 +120,9 @@ if __name__ == "__main__":
                 img, label = data
                 img, label = img.to(device), label.to(device)
                 feature = net(img)
-                # x = fc(feature, label, opt, i_epoch, is_train=False)
+                x = fc(feature, label, is_train=False)
 
-                _, predicted = torch.max(feature.data, 1)
+                _, predicted = torch.max(x.data, 1)
                 total += label.size(0)
                 correct += (predicted == label).sum().item()
             print('测试分类准确率为：%.3f%%' % (100 * correct / total))
@@ -146,7 +135,7 @@ if __name__ == "__main__":
             torch.save(net.state_dict(), '%s/net_%03d.pth' % (opt.module_save.path, i_epoch + 1))
 
             if acc > best_acc:
-                f_best_acc = open("best_acc-resnet50-softmax.txt", 'w')
+                f_best_acc = open(log_dir + "/best_acc.txt", 'w')
                 f_best_acc.write("EPOCH=%d,best_acc= %.3f%%" % (i_epoch + 1, acc * 100.0))
                 f_best_acc.close()
                 best_acc = acc

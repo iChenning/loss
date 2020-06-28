@@ -28,16 +28,21 @@ opt.read_data.test.batch_size = 250
 opt.read_data.test.shuffle = False
 
 # ========================   训练       ============================
-opt.module_train = edict()
-opt.module_train.max_epoch = 150
-opt.module_train.margin_s = 30.0
-opt.module_train.margin_m = 0.01
-opt.lr_mul = [20,35,50,65,80,
-              95,110,120,130,140,
-              150,160,170,180,190]
-opt.lr_gamma = 0.5
-opt.is_softmax = True
+opt.train = edict()
+opt.train.net = 'Resnet22' # 'Net5'
+opt.train.fc_type = 'Dot' # 'Cos' 'CosAddMargin'
+opt.train.margin_s = 30.0
+opt.train.margin_m = 0.01
 opt.inter = 1
+
+opt.train.max_epoch = 150
+opt.lr_mul = [20, 35, 50, 65, 80,
+              95, 110, 120, 130, 140,
+              150, 160, 170, 180, 190]
+opt.lr_gamma = 0.5
+
+opt.is_softmax = True
+
 
 # ========================   保存       ============================
 opt.module_save = edict()
