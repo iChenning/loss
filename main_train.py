@@ -11,6 +11,7 @@ from tensorboardX import SummaryWriter
 import os
 import argparse
 from importlib.machinery import SourceFileLoader
+import torchvision
 
 # device = torch.device("cpu")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -27,10 +28,12 @@ if __name__ == "__main__":
 
     # ========================    数据读取    =========================
     read_train = opt.read_data.train
-    trainset = MyDataset(txt_path=read_train.file_path, transform=read_train.transforms)
+    # trainset = MyDataset(txt_path=read_train.file_path, transform=read_train.transforms)
+    trainset = torchvision.datasets.CIFAR10(root='./Data', train=True, download=False, transform=read_train.transforms)  # 训练数据集
     trainloader = DataLoader(trainset, batch_size=read_train.batch_size, shuffle=read_train.shuffle)
     read_test = opt.read_data.test
-    testset = MyDataset(txt_path=read_test.file_path, transform=read_test.transforms)
+    # testset = MyDataset(txt_path=read_test.file_path, transform=read_test.transforms)
+    testset = torchvision.datasets.CIFAR10(root='./Data', train=False, download=False, transform=read_test.transforms)
     testloader = DataLoader(testset, batch_size=read_test.batch_size, shuffle=read_test.shuffle)
 
     # ========================    导入网络    ========================
@@ -45,7 +48,7 @@ if __name__ == "__main__":
 
     now_time = datetime.now()
     time_str = datetime.strftime(now_time, '%m-%d_%H-%M-%S')
-    name = 'resnet50-softmax'
+    name = 'resnet50-数据'
     log_dir = os.path.join('log', name)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
@@ -64,16 +67,18 @@ if __name__ == "__main__":
             img, label = img.to(device), label.to(device)
             optimizer.zero_grad()
 
-            feature = net(img)
-            x = fc(feature, label, opt, i_epoch, is_train=True, is_softmax=opt.is_softmax)
-
-            if opt.is_softmax:
-                loss = criterion(x, label)
-            else:
-                if (i_epoch % (2 * opt.inter) + i_epoch % opt.inter) % (2 * opt.inter) == 0:
-                    loss = criterion(x, label)
-                else:
-                    loss = criterion(x, label) / opt.module_train.margin_s
+            # feature = net(img)
+            # x = fc(feature, label, opt, i_epoch, is_train=True, is_softmax=opt.is_softmax)
+            #
+            # if opt.is_softmax:
+            #     loss = criterion(x, label)
+            # else:
+            #     if (i_epoch % (2 * opt.inter) + i_epoch % opt.inter) % (2 * opt.inter) == 0:
+            #         loss = criterion(x, label)
+            #     else:
+            #         loss = criterion(x, label) / opt.module_train.margin_s
+            x = net(img)
+            loss = criterion(x, label)
             loss.backward()
             optimizer.step()
 
@@ -126,9 +131,9 @@ if __name__ == "__main__":
                 img, label = data
                 img, label = img.to(device), label.to(device)
                 feature = net(img)
-                x = fc(feature, label, opt, i_epoch, is_train=False)
+                # x = fc(feature, label, opt, i_epoch, is_train=False)
 
-                _, predicted = torch.max(x.data, 1)
+                _, predicted = torch.max(feature.data, 1)
                 total += label.size(0)
                 correct += (predicted == label).sum().item()
             print('测试分类准确率为：%.3f%%' % (100 * correct / total))

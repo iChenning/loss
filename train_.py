@@ -8,6 +8,8 @@ from torch.utils.data import Dataset
 from PIL import Image
 import os
 from resnet import ResNet18
+from loss import AddMarginLinear
+from config import opt
 
 # 定义是否使用GPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -77,6 +79,7 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship'
 
 # 模型定义-ResNet
 net = ResNet18().to(device)
+fc = AddMarginLinear(s=30, m=0.01)
 
 # 定义损失函数和优化方式
 criterion = nn.CrossEntropyLoss()  #损失函数为交叉熵，多用于多分类问题
@@ -105,6 +108,7 @@ if __name__ == "__main__":
 
                     # forward + backward
                     outputs = net(inputs)
+                    outputs = fc(outputs, labels, opt, epoch, is_train=True, is_softmax=opt.is_softmax)
                     loss = criterion(outputs, labels)
                     loss.backward()
                     optimizer.step()
@@ -131,6 +135,7 @@ if __name__ == "__main__":
                         images, labels = data
                         images, labels = images.to(device), labels.to(device)
                         outputs = net(images)
+                        outputs = fc(outputs, images, opt, epoch, is_train=False)
                         # 取得分最高的那个类 (outputs.data的索引号)
                         _, predicted = torch.max(outputs.data, 1)
                         total += labels.size(0)
@@ -145,7 +150,7 @@ if __name__ == "__main__":
                     f.flush()
                     # 记录最佳测试分类准确率并写入best_acc.txt文件中
                     if acc > best_acc:
-                        f3 = open("best_acc_bieren.txt", "w")
+                        f3 = open("best_acc_bieren-1.txt", "w")
                         f3.write("EPOCH=%d,best_acc= %.3f%%" % (epoch + 1, acc))
                         f3.close()
                         best_acc = acc
