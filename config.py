@@ -29,8 +29,8 @@ opt.read_data.test.shuffle = False
 
 # ========================   训练       ============================
 opt.train = edict()
-opt.train.net = 'Resnet22' # 'Net5' 'Resnet22'
-opt.train.fc_type = 'Cos' # 'Dot' 'Cos' 'CosAddMargin'
+opt.train.net = 'ACRes26' # 'Net5' 'Resnet22' 'Resnet26' 'ACRes26'
+opt.train.fc_type = 'Dot' # 'Dot' 'Cos' 'CosAddMargin'
 opt.train.margin_s = 30.0
 opt.train.margin_m = 0.01
 opt.inter = 1

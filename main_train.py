@@ -11,6 +11,8 @@ import argparse
 from importlib.machinery import SourceFileLoader
 from moduls.modul_net5 import Net5
 from moduls.modul_resnet22 import ResNet22
+from moduls.modul_resnet26 import ResNet26
+from moduls.modul_ACRes26 import ACRes26
 from moduls.fc_weight import Dot, Cos, CosAddMargin
 
 
@@ -31,18 +33,20 @@ if __name__ == "__main__":
     # trainset = MyDataset(txt_path=read_train.file_path, transform=read_train.transforms)
     trainset = torchvision.datasets.CIFAR10(root='./Data', train=True, download=False, transform=read_train.transforms)  # 训练数据集
     trainloader = DataLoader(trainset, batch_size=read_train.batch_size, shuffle=read_train.shuffle)
-    trainloader_pre = data_prefetcher(trainloader)
     read_test = opt.read_data.test
     # testset = MyDataset(txt_path=read_test.file_path, transform=read_test.transforms)
     testset = torchvision.datasets.CIFAR10(root='./Data', train=False, download=False, transform=read_test.transforms)
     testloader = DataLoader(testset, batch_size=read_test.batch_size, shuffle=read_test.shuffle)
-    testloader_pre = data_prefetcher(testloader)
 
     # ========================    导入网络    ========================
     if opt.train.net == 'Net5':
         net = Net5(opt).to(device)
-    else:
+    elif opt.train.net == 'Resnet22':
         net = ResNet22().to(device)
+    elif opt.train.net == 'Resnet26':
+        net = ResNet26().to(device)
+    else:
+        net = ACRes26().to(device)
 
     if opt.train.fc_type == 'Cos':
         fc = Cos()
