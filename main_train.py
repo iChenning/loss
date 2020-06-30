@@ -18,6 +18,21 @@ from moduls.fc_weight import Dot, Cos, CosAddMargin
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.backends.cudnn.benchmark = True
+if torch.cuda.device_count() >= 2:
+    torch.cuda.set_device(2) # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+
+
+class Net(nn.Module):
+    def __init__(self, feature_net, fc):
+        super(Net, self).__init__()
+        self.feature_net = feature_net
+        self.fc = fc
+
+    def forward(self, img, label, is_train=True):
+        feature = self.feature_net(img)
+        x = self.fc(feature, label, is_train=is_train)
+        return x
+
 
 
 # ========================    开始训练    ========================
@@ -39,21 +54,27 @@ if __name__ == "__main__":
     testloader = DataLoader(testset, batch_size=read_test.batch_size, shuffle=read_test.shuffle)
 
     # ========================    导入网络    ========================
-    if opt.train.net == 'Net5':
-        net = Net5(opt).to(device)
-    elif opt.train.net == 'Resnet22':
-        net = ResNet22().to(device)
-    elif opt.train.net == 'Resnet26':
-        net = ResNet26().to(device)
-    else:
-        net = ACRes26().to(device)
+    # if opt.train.net == 'Net5':
+    #     feature_net = Net5(opt).to(device)
+    # elif opt.train.net == 'Resnet22':
+    #     feature_net = ResNet22().to(device)
+    # elif opt.train.net == 'Resnet26':
+    #     feature_net = ResNet26().to(device)
+    # else:
+    #     feature_net = ACRes26().to(device)
+    #
+    # if opt.train.fc_type == 'Cos':
+    #     fc = Cos()
+    # elif opt.train.fc_type == 'CosAddMargin':
+    #     fc = CosAddMargin()
+    # else:
+    #     fc = Dot()
+    #
+    # net = Net(feature_net, fc)
 
-    if opt.train.fc_type == 'Cos':
-        fc = Cos()
-    elif opt.train.fc_type == 'CosAddMargin':
-        fc = CosAddMargin()
-    else:
-        fc = Dot()
+    net = Net(ACRes26(), CosAddMargin()).to(device)
+
+
 
     # ========================    初始化优化器 =======================
     if 'Margin' in opt.train.fc_type:
@@ -84,8 +105,7 @@ if __name__ == "__main__":
             img, label = img.to(device), label.to(device)
             optimizer.zero_grad()
 
-            feature = net(img)
-            x = fc(feature, label, is_train=True)
+            x = net(img, label, is_train=True)
 
             loss = criterion(x, label)
             loss.backward()
@@ -125,8 +145,8 @@ if __name__ == "__main__":
                 net.eval()
                 img, label = data
                 img, label = img.to(device), label.to(device)
-                feature = net(img)
-                x = fc(feature, label, is_train=False)
+
+                x = net(img, label, is_train=False)
 
                 _, predicted = torch.max(x.data, 1)
                 total += label.size(0)
