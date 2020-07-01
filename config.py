@@ -57,16 +57,19 @@ opt.read_data.test.shuffle = False
 
 # ========================   训练       ============================
 opt.train = edict()
-opt.train.feature_net = 'ACRes26'  # 'Net5' 'Resnet22' 'Resnet26' 'ACRes26'
-opt.train.fc_type = 'Dot'  # 'Dot' 'Cos' 'CosAddMargin'
+opt.train.feature_net = 'Net5'  # 'Net5' 'Resnet22' 'Resnet26' 'ACRes26'
+opt.train.fc_type = 'Cos'  # 'Dot' 'Cos' 'CosAddMargin'
 opt.train.margin_s = 30.0
 opt.train.margin_m = 0.01
 opt.inter = 1
 
-# opt.train.max_epoch = 200
-# opt.lr_mul = [80, 135, 170]
-opt.train.max_epoch = 100
-opt.lr_mul = [40, 66, 85]
+is_byol = False
+if is_byol:
+    opt.train.max_epoch = 100
+    opt.lr_mul = [40, 66, 85]
+else:
+    opt.train.max_epoch = 200
+    opt.lr_mul = [80, 135, 170]
 opt.lr_gamma = 0.1
 
 opt.is_softmax = True

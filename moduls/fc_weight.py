@@ -29,7 +29,8 @@ class Cos(nn.Module):
         if is_train:
             output = F.linear(F.normalize(input), F.normalize(self.fc))
         else:
-            output = F.linear(F.normalize(input), F.normalize(self.fc))
+            # output = F.linear(F.normalize(input), F.normalize(self.fc))
+            output = F.linear(input, self.fc)
         return output
 
 
@@ -53,6 +54,31 @@ class CosAddMargin(nn.Module):
         else:
             output = F.linear(F.normalize(input), F.normalize(self.fc))
         return output
+
+
+class CenterLoss(nn.Module):
+    def __init__(self, in_features=128, out_features=10):
+        super(CenterLoss, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.weight = Parameter(torch.FloatTensor(out_features, in_features))
+        nn.init.xavier_uniform_(self.weight)
+
+    def forward(self, input, label, is_train=True):
+        assert len(input) == len(label), "样本维度和label长度不一致"
+
+        if is_train:
+            cosine = F.linear(F.normalize(input), F.normalize(self.weight))
+            one_hot = torch.zeros(cosine.size())
+            one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+            cosine_s = cosine * one_hot
+            loss_center = (torch.sum(torch.sqrt(torch.tensor(2.) - cosine_s * torch.tensor(2.))) -
+                           torch.sqrt(torch.tensor(2.)) * (
+                                       cosine.size(0) * cosine.size(1) - cosine.size(0))) / cosine.size(0)
+            return (cosine, loss_center)
+        else:
+            output = F.linear(F.normalize(input), F.normalize(self.weight))
+            return output
 
 
 class AddMarginLinear(nn.Module):
@@ -93,28 +119,3 @@ class AddMarginLinear(nn.Module):
                + ', out_features=' + str(self.out_features) \
                + ', s=' + str(self.s) \
                + ', m=' + str(self.m) + ')'
-
-
-class CenterLoss(nn.Module):
-    def __init__(self, in_features=128, out_features=10):
-        super(CenterLoss, self).__init__()
-        self.in_features = in_features
-        self.out_features = out_features
-        self.weight = Parameter(torch.FloatTensor(out_features, in_features)).to(device)
-        nn.init.xavier_uniform_(self.weight)
-
-    def forward(self, input, label, is_train=True):
-        assert len(input) == len(label), "样本维度和label长度不一致"
-
-        if is_train:
-            cosine = F.linear(F.normalize(input), F.normalize(self.weight))
-            one_hot = torch.zeros(cosine.size(), device=device)
-            one_hot.scatter_(1, label.view(-1, 1).long(), 1)
-            cosine_s = cosine * one_hot
-            loss_center = (torch.sum(torch.sqrt(torch.tensor(2.) - cosine_s * torch.tensor(2.))) -
-                           torch.sqrt(torch.tensor(2.)) * (
-                                       cosine.size(0) * cosine.size(1) - cosine.size(0))) / cosine.size(0)
-            return (cosine, loss_center)
-        else:
-            output = F.linear(F.normalize(input), F.normalize(self.weight))
-            return output

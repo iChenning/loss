@@ -13,8 +13,8 @@ from importlib.machinery import SourceFileLoader
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.backends.cudnn.benchmark = True
-if torch.cuda.device_count() >= 2:
-    torch.cuda.set_device(2) # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+if torch.cuda.device_count() >= 4:
+    torch.cuda.set_device(3) # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 
 class Net(nn.Module):

@@ -120,7 +120,7 @@ if __name__ == "__main__":
 
     # ========================    数据读取    =========================
     read_train = opt.read_data.train
-    trainset = MyDataset2(txt_path=read_train.file_path, transform=read_train.transforms)
+    trainset = MyDatasetOfBYOL(txt_path=read_train.file_path, transform=read_train.transforms)
     trainloader = DataLoader(trainset, batch_size=read_train.batch_size, shuffle=read_train.shuffle)
 
     # ========================    导入网络    ========================
