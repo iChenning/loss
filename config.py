@@ -27,21 +27,21 @@ opt.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 's
 opt.read_data = edict()
 opt.read_data.train = edict()
 opt.read_data.train.file_path = "./Data/train.txt"
-# opt.read_data.train.transforms = transforms.Compose([
-#     transforms.RandomHorizontalFlip(p=0.5),
-#     transforms.RandomCrop(32, padding=4),
-#     transforms.ToTensor(),
-#     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-# ])
 opt.read_data.train.transforms = transforms.Compose([
     transforms.RandomHorizontalFlip(p=0.5),
-    transforms.RandomResizedCrop(32, scale=(0.5, 1.)),
-    transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2),
-    transforms.RandomGrayscale(p=.5),
-    # GaussianBlur([.1, 2.]),
+    transforms.RandomCrop(32, padding=4),
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
 ])
+# opt.read_data.train.transforms = transforms.Compose([
+#     transforms.RandomHorizontalFlip(p=0.5),
+#     transforms.RandomResizedCrop(32, scale=(0.5, 1.)),
+#     transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2),
+#     transforms.RandomGrayscale(p=.5),
+#     # GaussianBlur([.1, 2.]),
+#     transforms.ToTensor(),
+#     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+# ])
 
 opt.read_data.train.batch_size = 250
 opt.read_data.train.shuffle = True
@@ -57,7 +57,7 @@ opt.read_data.test.shuffle = False
 
 # ========================   训练       ============================
 opt.train = edict()
-opt.train.feature_net = 'Net5'  # 'Net5' 'Resnet22' 'Resnet26' 'ACRes26'
+opt.train.feature_net = 'Resnet26'  # 'Net5' 'Resnet22' 'Resnet26' 'ACRes26'
 opt.train.fc_type = 'Cos'  # 'Dot' 'Cos' 'CosAddMargin'
 opt.train.margin_s = 30.0
 opt.train.margin_m = 0.01

@@ -29,8 +29,8 @@ class Cos(nn.Module):
         if is_train:
             output = F.linear(F.normalize(input), F.normalize(self.fc))
         else:
-            # output = F.linear(F.normalize(input), F.normalize(self.fc))
-            output = F.linear(input, self.fc)
+            output = F.linear(F.normalize(input), F.normalize(self.fc))
+            # output = F.linear(input, self.fc)
         return output
 
 
