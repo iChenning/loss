@@ -1,4 +1,4 @@
-from utils.my_dataset import MyDataset
+from utils.my_dataset import MyDataset, data_prefetcher
 import torchvision
 from torch.utils.data import DataLoader
 import torch
@@ -9,38 +9,24 @@ from tensorboardX import SummaryWriter
 import os
 import argparse
 from importlib.machinery import SourceFileLoader
+from moduls.modul_net5 import Net5
+from moduls.modul_resnet22 import ResNet22
+from moduls.modul_resnet26 import ResNet26
+from moduls.modul_ACRes26 import ACRes26
+from moduls.fc_weight import Dot, Cos, CosAddMargin
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.backends.cudnn.benchmark = True
-if torch.cuda.device_count() >= 4:
-    torch.cuda.set_device(3) # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+if torch.cuda.device_count() >= 2:
+    torch.cuda.set_device(2) # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 
 class Net(nn.Module):
-    def __init__(self, opt):
+    def __init__(self, feature_net, fc):
         super(Net, self).__init__()
-        from moduls.modul_net5 import Net5
-        from moduls.modul_resnet22 import ResNet22
-        from moduls.modul_resnet26 import ResNet26
-        from moduls.modul_ACRes26 import ACRes26
-        from moduls.fc_weight import Dot, Cos, CosAddMargin
-
-        if opt.train.feature_net == 'Net5':
-            self.feature_net = Net5(opt)
-        elif opt.train.feature_net == 'Resnet22':
-            self.feature_net = ResNet22()
-        elif opt.train.feature_net == 'Resnet26':
-            self.feature_net = ResNet26()
-        else:
-            self.feature_net = ACRes26()
-
-        if opt.train.fc_type == 'Cos':
-            self.fc = Cos()
-        elif opt.train.fc_type == 'CosAddMargin':
-            self.fc = CosAddMargin()
-        else:
-            self.fc = Dot()
+        self.feature_net = feature_net
+        self.fc = fc
 
     def forward(self, img, label, is_train=True):
         feature = self.feature_net(img)
@@ -68,7 +54,27 @@ if __name__ == "__main__":
     testloader = DataLoader(testset, batch_size=read_test.batch_size, shuffle=read_test.shuffle)
 
     # ========================    导入网络    ========================
-    net = Net(opt).to(device)
+    if opt.train.net == 'Net5':
+        feature_net = Net5(opt).to(device)
+    elif opt.train.net == 'Resnet22':
+        feature_net = ResNet22().to(device)
+    elif opt.train.net == 'Resnet26':
+        feature_net = ResNet26().to(device)
+    else:
+        feature_net = ACRes26().to(device)
+
+    if opt.train.fc_type == 'Cos':
+        fc = Cos()
+    elif opt.train.fc_type == 'CosAddMargin':
+        fc = CosAddMargin()
+    else:
+        fc = Dot()
+
+    net = Net(feature_net, fc)
+
+    # net = Net(ACRes26(), CosAddMargin()).to(device)
+
+
 
     # ========================    初始化优化器 =======================
     if 'Margin' in opt.train.fc_type:
@@ -80,7 +86,7 @@ if __name__ == "__main__":
 
     now_time = datetime.now()
     time_str = datetime.strftime(now_time, '%m-%d_%H-%M-%S')
-    log_dir = os.path.join('log', time_str + '_' + opt.train.feature_net + '-' + opt.train.fc_type)
+    log_dir = os.path.join('log', time_str + '_' + opt.train.net + '-' + opt.train.fc_type)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     writer = SummaryWriter(log_dir=log_dir)
