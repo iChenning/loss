@@ -30,13 +30,24 @@ def loss_fn(x, y):
 
 
 class BYOL(nn.Module):
-    def __init__(self, net, m=0.996):
+    def __init__(self, opt, m=0.996):
         super(BYOL, self).__init__()
 
         self.m = m
 
-        self.online_f = net
-        self.target_f = net #copy.deepcopy(self.online_f)
+        if opt.train.feature_net == 'Net5':
+            self.online_f = Net5(opt)
+            self.target_f = Net5(opt)  # copy.deepcopy(self.online_f)
+        elif opt.train.feature_net == 'Resnet22':
+            self.online_f = ResNet22()
+            self.target_f = ResNet22()
+        elif opt.train.feature_net == 'Resnet26':
+            self.online_f = ResNet26()
+            self.target_f = ResNet26()
+        else:
+            self.online_f = ACRes26()
+            self.target_f = ACRes26()
+
         for param_online_f, param_target_f in zip(self.online_f.parameters(), self.target_f.parameters()):
             param_target_f.data.copy_(param_online_f.data)  # initialize
             param_target_f.requires_grad = False  # not update by gradient
@@ -111,24 +122,16 @@ if __name__ == "__main__":
     trainloader = DataLoader(trainset, batch_size=read_train.batch_size, shuffle=read_train.shuffle)
 
     # ========================    导入网络    ========================
-    if opt.train.net == 'Net5':
-        byol = BYOL(Net5(opt)).to(device)
-    elif opt.train.net == 'Resnet22':
-        byol = BYOL(ResNet22()).to(device)
-    elif opt.train.net == 'Resnet26':
-        byol = BYOL(ResNet26()).to(device)
-    else:
-        byol = BYOL(ACRes26()).to(device)
-
-
+    byol = BYOL(opt).to(device)
 
     # ========================    初始化优化器 =======================
     optimizer = optim.SGD(byol.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0003)
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, opt.lr_mul, gamma=opt.lr_gamma)
+    c = nn.CrossEntropyLoss()
 
     now_time = datetime.now()
     time_str = datetime.strftime(now_time, '%m-%d_%H-%M-%S')
-    log_dir = os.path.join('log', time_str + '_' + opt.train.net + '-' + opt.train.fc_type)
+    log_dir = os.path.join('log', time_str + '_' + opt.train.feature_net + '-' + opt.train.fc_type)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     writer = SummaryWriter(log_dir=log_dir)
