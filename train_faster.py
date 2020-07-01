@@ -167,4 +167,6 @@ if __name__ == "__main__":
                 f_best_acc.write("EPOCH=%d,best_acc= %.3f%%" % (i_epoch + 1, acc * 100.0))
                 f_best_acc.close()
                 best_acc = acc
+
+
     print("训练完成")
