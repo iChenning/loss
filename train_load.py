@@ -11,6 +11,10 @@ from tensorboardX import SummaryWriter
 import os
 import argparse
 from importlib.machinery import SourceFileLoader
+from moduls.modul_net5 import Net5
+from moduls.modul_resnet22 import ResNet22
+from moduls.modul_resnet26 import ResNet26
+from moduls.modul_ACRes26 import ACRes26
 from moduls.fc_weight import Dot, Cos, CosAddMargin
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -31,10 +35,6 @@ class BYOL(nn.Module):
 
         self.m = m
 
-        from moduls.modul_net5 import Net5
-        from moduls.modul_resnet22 import ResNet22
-        from moduls.modul_resnet26 import ResNet26
-        from moduls.modul_ACRes26 import ACRes26
         if opt.train.feature_net == 'Net5':
             self.online_f = Net5(opt)
             self.target_f = Net5(opt)  # copy.deepcopy(self.online_f)
@@ -47,7 +47,6 @@ class BYOL(nn.Module):
         else:
             self.online_f = ACRes26()
             self.target_f = ACRes26()
-        print("online_f is target_f?:", self.online_f is self.target_f)
 
         for param_online_f, param_target_f in zip(self.online_f.parameters(), self.target_f.parameters()):
             param_target_f.data.copy_(param_online_f.data)  # initialize
@@ -62,7 +61,6 @@ class BYOL(nn.Module):
                                       nn.BatchNorm1d(1024),
                                       nn.ReLU(inplace=True),
                                       nn.Linear(1024, dim_mlp))
-        print("online_g is target_g?:", self.online_g is self.target_g)
         for param_online_g, param_target_g in zip(self.online_g.parameters(), self.target_g.parameters()):
             param_target_g.data.copy_(param_online_g.data)  # initialize
             param_target_g.requires_grad = False  # not update by gradient
@@ -125,6 +123,7 @@ if __name__ == "__main__":
 
     # ========================    导入网络    ========================
     byol = BYOL(opt).to(device)
+    byol.load_state_dict(torch.load("./model/net_020.pth"))
 
     # ========================    初始化优化器 =======================
     optimizer = optim.SGD(byol.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0003)

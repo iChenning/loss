@@ -9,11 +9,6 @@ from tensorboardX import SummaryWriter
 import os
 import argparse
 from importlib.machinery import SourceFileLoader
-from moduls.modul_net5 import Net5
-from moduls.modul_resnet22 import ResNet22
-from moduls.modul_resnet26 import ResNet26
-from moduls.modul_ACRes26 import ACRes26
-from moduls.fc_weight import Dot, Cos, CosAddMargin
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -25,6 +20,12 @@ if torch.cuda.device_count() >= 2:
 class Net(nn.Module):
     def __init__(self, opt):
         super(Net, self).__init__()
+        from moduls.modul_net5 import Net5
+        from moduls.modul_resnet22 import ResNet22
+        from moduls.modul_resnet26 import ResNet26
+        from moduls.modul_ACRes26 import ACRes26
+        from moduls.fc_weight import Dot, Cos, CosAddMargin
+
         if opt.train.feature_net == 'Net5':
             self.feature_net = Net5(opt)
         elif opt.train.feature_net == 'Resnet22':
@@ -68,7 +69,6 @@ if __name__ == "__main__":
 
     # ========================    导入网络    ========================
     net = Net(opt).to(device)
-
 
     # ========================    初始化优化器 =======================
     if 'Margin' in opt.train.fc_type:
