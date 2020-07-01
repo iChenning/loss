@@ -1,4 +1,4 @@
-from utils.my_dataset import MyDataset2, data_prefetcher
+from utils.my_dataset import MyDatasetOfBYOL
 import torchvision
 from torch.utils.data import DataLoader
 import copy
