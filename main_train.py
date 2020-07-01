@@ -9,12 +9,13 @@ from tensorboardX import SummaryWriter
 import os
 import argparse
 from importlib.machinery import SourceFileLoader
+from moduls.loss import LossAddCenter
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.backends.cudnn.benchmark = True
-if torch.cuda.device_count() >= 4:
-    torch.cuda.set_device(3) # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+if torch.cuda.device_count() >= 2:
+    torch.cuda.set_device(1) # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 
 class Net(nn.Module):
@@ -35,6 +36,7 @@ class Net(nn.Module):
         else:
             self.feature_net = ACRes26()
 
+        self.fc_type = opt.train.fc_type
         if opt.train.fc_type == 'Cos':
             self.fc = Cos()
         elif opt.train.fc_type == 'CosAddMargin':
@@ -59,22 +61,26 @@ if __name__ == "__main__":
 
     # ========================    数据读取    =========================
     read_train = opt.read_data.train
-    # trainset = MyDataset(txt_path=read_train.file_path, transform=read_train.transforms)
-    trainset = torchvision.datasets.CIFAR10(root='./Data', train=True, download=False, transform=read_train.transforms)  # 训练数据集
+    trainset = MyDataset(txt_path=read_train.file_path, transform=read_train.transforms)
+    # trainset = torchvision.datasets.CIFAR10(root='./Data', train=True, download=False, transform=read_train.transforms)  # 训练数据集
     trainloader = DataLoader(trainset, batch_size=read_train.batch_size, shuffle=read_train.shuffle)
     read_test = opt.read_data.test
-    # testset = MyDataset(txt_path=read_test.file_path, transform=read_test.transforms)
-    testset = torchvision.datasets.CIFAR10(root='./Data', train=False, download=False, transform=read_test.transforms)
+    testset = MyDataset(txt_path=read_test.file_path, transform=read_test.transforms)
+    # testset = torchvision.datasets.CIFAR10(root='./Data', train=False, download=False, transform=read_test.transforms)
     testloader = DataLoader(testset, batch_size=read_test.batch_size, shuffle=read_test.shuffle)
 
     # ========================    导入网络    ========================
     net = Net(opt).to(device)
 
     # ========================    初始化优化器 =======================
-    if 'Margin' in opt.train.fc_type:
-        criterion = nn.CrossEntropyLoss()
+    if opt.train.loss_type == 'standard':
+        if 'Margin' in opt.train.fc_type:
+            criterion = nn.CrossEntropyLoss()
+        else:
+            criterion = nn.CrossEntropyLoss()
     else:
         criterion = nn.CrossEntropyLoss()
+        criterion_add = LossAddCenter().to(device)
     optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0003)
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, opt.lr_mul, gamma=opt.lr_gamma)
 
@@ -101,7 +107,13 @@ if __name__ == "__main__":
 
             x = net(img, label, is_train=True)
 
-            loss = criterion(x, label)
+            if opt.train.loss_type == 'standard':
+                loss = criterion(x, label)
+            else:
+                loss = criterion(x, label)
+                loss_center = criterion_add(x, label)
+                loss = (loss + loss_center) / 2.
+            # loss = criterion(x, label)
             loss.backward()
             optimizer.step()
 
@@ -161,5 +173,3 @@ if __name__ == "__main__":
                 best_acc = acc
 
     print("训练完成")
-
-    print("修改文件 测试")
