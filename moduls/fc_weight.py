@@ -23,11 +23,13 @@ class Cos(nn.Module):
     def __init__(self, in_features=128, out_features=10):
         super(Cos, self).__init__()
         self.fc = Parameter(torch.FloatTensor(out_features, in_features))
-        nn.init.xavier_uniform_(self.fc)
+        # nn.init.xavier_uniform_(self.fc)
+        nn.init.kaiming_normal_(self.fc)
 
     def forward(self, input, label, is_train=True):
         if is_train:
             output = F.linear(F.normalize(input), F.normalize(self.fc))
+            # output = F.linear(input, self.fc)
         else:
             output = F.linear(F.normalize(input), F.normalize(self.fc))
             # output = F.linear(input, self.fc)

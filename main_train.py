@@ -15,7 +15,7 @@ from moduls.loss import LossAddCenter
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.backends.cudnn.benchmark = True
 if torch.cuda.device_count() >= 2:
-    torch.cuda.set_device(1) # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+    torch.cuda.set_device(3) # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 
 class Net(nn.Module):
@@ -70,7 +70,11 @@ if __name__ == "__main__":
     testloader = DataLoader(testset, batch_size=read_test.batch_size, shuffle=read_test.shuffle)
 
     # ========================    导入网络    ========================
-    net = Net(opt).to(device)
+    # net = Net(opt).to(device)
+    from moduls.modul_net5 import Net5
+    net = Net5(opt).to(device)
+    from moduls.fc_weight import Cos
+    fc = Cos().to(device)
 
     # ========================    初始化优化器 =======================
     if opt.train.loss_type == 'standard':
@@ -82,6 +86,7 @@ if __name__ == "__main__":
         criterion = nn.CrossEntropyLoss()
         criterion_add = LossAddCenter().to(device)
     optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0003)
+    optimizer_fc = optim.SGD(fc.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0003)
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, opt.lr_mul, gamma=opt.lr_gamma)
 
     now_time = datetime.now()
@@ -99,23 +104,29 @@ if __name__ == "__main__":
         correct = 0.0
         total = 0.0
         optimizer.zero_grad()
+        optimizer_fc.zero_grad()
         scheduler.step()
+
         for i_iter, data in enumerate(trainloader):
             img, label = data
             img, label = img.to(device), label.to(device)
             optimizer.zero_grad()
 
-            x = net(img, label, is_train=True)
+            feature = net(img)
+            x = fc(feature, label, is_train=True)
+            # x = net(img, label, is_train=True)
 
             if opt.train.loss_type == 'standard':
                 loss = criterion(x, label)
             else:
                 loss = criterion(x, label)
                 loss_center = criterion_add(x, label)
-                loss = (loss + loss_center) / 2.
+                loss = (loss + loss_center) / torch.tensor(2.)
             # loss = criterion(x, label)
             loss.backward()
             optimizer.step()
+            optimizer_fc.step()
+
 
             sum_loss += loss.item()
             _, predicted = torch.max(x.data, 1)
@@ -143,6 +154,9 @@ if __name__ == "__main__":
             writer.add_scalars('x_group', {'neg_x_max': torch.max(x_s)}, i_epoch * len(trainloader) + i_iter)
             writer.add_scalars('x_group', {'neg_x_min': torch.min(x_s)}, i_epoch * len(trainloader) + i_iter)
 
+        for name, parameters in fc.named_parameters():
+            print(name, ':', parameters)
+
         print("测试...")
         with torch.no_grad():
             correct = 0
@@ -152,7 +166,9 @@ if __name__ == "__main__":
                 img, label = data
                 img, label = img.to(device), label.to(device)
 
-                x = net(img, label, is_train=False)
+                feature = net(img)
+                x = fc(feature, label, is_train=True)
+                # x = net(img, label, is_train=False)
 
                 _, predicted = torch.max(x.data, 1)
                 total += label.size(0)
