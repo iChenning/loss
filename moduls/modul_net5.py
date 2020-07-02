@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 class Net5(nn.Module):
-    def __init__(self, opt):
+    def __init__(self):
         super(Net5, self).__init__()
         self.conv1 = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False),

@@ -7,7 +7,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class Dot(nn.Module):
-    def __init__(self, in_features=128, out_features=10):
+    def __init__(self, opt, in_features=128, out_features=10):
         super(Dot, self).__init__()
         self.fc = nn.Linear(in_features, out_features, bias=False)
 
@@ -20,38 +20,41 @@ class Dot(nn.Module):
 
 
 class Cos(nn.Module):
-    def __init__(self, in_features=128, out_features=10):
+    def __init__(self, opt, in_features=128, out_features=10):
         super(Cos, self).__init__()
+        self.scale = opt.train.scale
+
         self.fc = Parameter(torch.FloatTensor(out_features, in_features))
         nn.init.kaiming_normal_(self.fc)
 
     def forward(self, input, label, is_train=True):
         if is_train:
-            output = F.linear(F.normalize(input), F.normalize(self.fc))
+            output = F.linear(F.normalize(input), F.normalize(self.fc)) * self.scale
         else:
-            output = F.linear(F.normalize(input), F.normalize(self.fc))
+            output = F.linear(F.normalize(input), F.normalize(self.fc)) * self.scale
         return output
 
 
 class CosAddMargin(nn.Module):
-    def __init__(self, in_features=128, out_features=10, s=30.0, m=0.2):
+    def __init__(self, opt, in_features=128, out_features=10):
         super(CosAddMargin, self).__init__()
-        self.m = m
-        self.s = s
+        self.scale = opt.train.scale
+        self.margin = opt.train.margin
+
         self.fc = Parameter(torch.FloatTensor(out_features, in_features))
         nn.init.kaiming_normal_(self.fc)
 
     def forward(self, input, label, is_train=True):
         if is_train:
             cosine = F.linear(F.normalize(input), F.normalize(self.fc))
-            phi = cosine - self.m
+            phi = cosine - self.margin
             one_hot = torch.zeros(cosine.size())
             one_hot.scatter_(1, label.view(-1, 1).long(), 1)
             output = (one_hot * phi) + (
                         (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
-            output *= self.s
+            output *= self.scale
         else:
-            output = F.linear(F.normalize(input), F.normalize(self.fc))
+            output = F.linear(F.normalize(input), F.normalize(self.fc)) *self.scale
         return output
 
 
