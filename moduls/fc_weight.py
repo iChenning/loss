@@ -23,16 +23,13 @@ class Cos(nn.Module):
     def __init__(self, in_features=128, out_features=10):
         super(Cos, self).__init__()
         self.fc = Parameter(torch.FloatTensor(out_features, in_features))
-        # nn.init.xavier_uniform_(self.fc)
         nn.init.kaiming_normal_(self.fc)
 
     def forward(self, input, label, is_train=True):
         if is_train:
             output = F.linear(F.normalize(input), F.normalize(self.fc))
-            # output = F.linear(input, self.fc)
         else:
             output = F.linear(F.normalize(input), F.normalize(self.fc))
-            # output = F.linear(input, self.fc)
         return output
 
 
@@ -42,7 +39,7 @@ class CosAddMargin(nn.Module):
         self.m = m
         self.s = s
         self.fc = Parameter(torch.FloatTensor(out_features, in_features))
-        nn.init.xavier_uniform_(self.fc)
+        nn.init.kaiming_normal_(self.fc)
 
     def forward(self, input, label, is_train=True):
         if is_train:
@@ -66,7 +63,7 @@ class AddMarginLinear(nn.Module):
         self.s = s
         self.m = m
         self.weight = Parameter(torch.FloatTensor(out_features, in_features)).to(device)
-        nn.init.xavier_uniform_(self.weight)
+        nn.init.kaiming_normal_(self.fc)
 
     def forward(self, input, label, opt, epoch, is_train=True, is_softmax=True):
         assert len(input) == len(label), "样本维度和label长度不一致"
