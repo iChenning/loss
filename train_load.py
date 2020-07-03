@@ -15,7 +15,7 @@ from moduls.modul_net5 import Net5
 from moduls.modul_resnet22 import ResNet22
 from moduls.modul_resnet26 import ResNet26
 from moduls.modul_ACRes26 import ACRes26
-from moduls.fc_weight import Dot, Cos, CosAddMargin
+from moduls.modul_fc_weight import Dot, Cos, CosAddMargin
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.backends.cudnn.benchmark = True

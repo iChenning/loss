@@ -11,7 +11,7 @@ from tensorboardX import SummaryWriter
 import os
 import argparse
 from importlib.machinery import SourceFileLoader
-from moduls.fc_weight import Dot, Cos, CosAddMargin
+from moduls.modul_fc_weight import Dot, Cos, CosAddMargin
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.backends.cudnn.benchmark = True

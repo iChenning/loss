@@ -1,17 +1,26 @@
-import torch
 import torch.nn as nn
+from moduls.loss_center import Center
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+class Loss(nn.Module):
+    def __init__(self, opt):
+        super(Loss, self).__init__()
 
-class LossAddCenter(nn.Module):
-    def __init__(self):
-        super(LossAddCenter, self).__init__()
+        if opt.train.fc_type == 'Dot' and opt.train.loss_type == 'add_center':
+            assert False, "Dot and center can not use together, center must used with cos!!!"
 
-    def forward(self, feature, label):
-        one_hot = torch.zeros(feature.size())
-        one_hot.scatter_(1, label.view(-1, 1).long(), 1)
-        feature_s = feature * one_hot * 0.01
-        loss_center = (torch.sum(torch.sqrt(torch.tensor(2.) - feature_s * torch.tensor(2.))) - torch.sqrt(
-            torch.tensor(2.)) * (feature.size(0) * feature.size(1) - feature.size(0))) / feature.size(0)
+        self.is_add_center = True if opt.train.loss_type == 'add_center' else False
+        if self.is_add_center:
+            self.criterion_1 = nn.CrossEntropyLoss()
+            self.criterion_2 = Center(opt)
+        else:
+            self.criterion = nn.CrossEntropyLoss()
 
-        return loss_center
+    def forward(self, x, label):
+        if self.is_add_center:
+            loss_1 = self.criterion_1(x, label)
+            loss_2 = self.criterion_2(x, label)
+            loss = (loss_1 + loss_2) / 2.0
+            return (loss, loss_1, loss_2)
+        else:
+            loss = self.criterion(x, label)
+            return (loss,)

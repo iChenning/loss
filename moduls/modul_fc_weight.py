@@ -3,8 +3,6 @@ import torch.nn as nn
 from torch.nn import Parameter
 import torch.nn.functional as F
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
 class Dot(nn.Module):
     def __init__(self, opt, in_features=128, out_features=10):
@@ -40,6 +38,7 @@ class CosAddMargin(nn.Module):
         super(CosAddMargin, self).__init__()
         self.scale = opt.train.scale
         self.margin = opt.train.margin
+        self.device = opt.device
 
         self.fc = Parameter(torch.FloatTensor(out_features, in_features))
         nn.init.kaiming_normal_(self.fc)
@@ -48,7 +47,7 @@ class CosAddMargin(nn.Module):
         if is_train:
             cosine = F.linear(F.normalize(input), F.normalize(self.fc))
             phi = cosine - self.margin
-            one_hot = torch.zeros(cosine.size())
+            one_hot = torch.zeros(cosine.size(), device=self.device)
             one_hot.scatter_(1, label.view(-1, 1).long(), 1)
             output = (one_hot * phi) + (
                         (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
@@ -65,7 +64,7 @@ class AddMarginLinear(nn.Module):
         self.out_features = out_features
         self.s = s
         self.m = m
-        self.weight = Parameter(torch.FloatTensor(out_features, in_features)).to(device)
+        self.weight = Parameter(torch.FloatTensor(out_features, in_features)).to('cuda')
         nn.init.kaiming_normal_(self.fc)
 
     def forward(self, input, label, opt, epoch, is_train=True, is_softmax=True):
@@ -80,7 +79,7 @@ class AddMarginLinear(nn.Module):
                 else:
                     cosine = F.linear(F.normalize(input), F.normalize(self.weight))
                     phi = cosine - self.m * (epoch // 10 + 1)
-                    one_hot = torch.zeros(cosine.size(), device=device)
+                    one_hot = torch.zeros(cosine.size(), device='cuda')
                     one_hot.scatter_(1, label.view(-1, 1).long(), 1)
                     output = (one_hot * phi) + (
                             (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4

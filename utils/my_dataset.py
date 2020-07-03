@@ -1,7 +1,26 @@
 from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
+import torchvision
 import os
 from PIL import Image
-import torch
+
+
+def dataloader(opt):
+    read_train = opt.read_data.train
+    if opt.read_data.is_disk:
+        trainset = MyDataset(txt_path=read_train.file_path, transform=read_train.transforms)
+    else:
+        trainset = torchvision.datasets.CIFAR10(root='./Data', train=True, download=False, transform=read_train.transforms)  # 训练数据集
+    trainloader = DataLoader(trainset, batch_size=read_train.batch_size, shuffle=read_train.shuffle)
+
+    read_test = opt.read_data.test
+    if opt.read_data.is_disk:
+        testset = MyDataset(txt_path=read_test.file_path, transform=read_test.transforms)
+    else:
+        testset = torchvision.datasets.CIFAR10(root='./Data', train=False, download=False, transform=read_test.transforms)
+    testloader = DataLoader(testset, batch_size=read_test.batch_size, shuffle=read_test.shuffle)
+
+    return (trainloader, testloader)
 
 class MyDataset(Dataset):
     def __init__(self, txt_path, transform=None, target_transform=None):
