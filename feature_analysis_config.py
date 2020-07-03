@@ -7,7 +7,7 @@ opt = edict()
 opt.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.backends.cudnn.benchmark = True
 if torch.cuda.device_count() >= 2:
-    torch.cuda.set_device(3)                                   # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+    torch.cuda.set_device(1)                                   # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 opt.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
@@ -17,12 +17,12 @@ opt.read_data.is_disk = True  # True False
 
 opt.read_data.train = edict()
 opt.read_data.train.file_path = "./Data/train.txt"
-opt.read_data.train.batch_size = 500
-opt.read_data.train.shuffle = True
+opt.read_data.train.batch_size = 250
+opt.read_data.train.shuffle = False
 
 opt.read_data.test = edict()
 opt.read_data.test.file_path = "./Data/test.txt"
-opt.read_data.test.batch_size = 500
+opt.read_data.test.batch_size = 250
 opt.read_data.test.shuffle = False
 
 # ========================   训练&测试   ============================

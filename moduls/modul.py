@@ -30,4 +30,4 @@ class Net(nn.Module):
     def forward(self, img, label, is_train=True):
         feature = self.feature_net(img)
         x = self.fc(feature, label, is_train=is_train)
-        return x
+        return (x, feature)

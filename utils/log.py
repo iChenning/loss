@@ -89,4 +89,4 @@ class Log():
             self.best_acc = acc
 
             print('Saving model......')
-            torch.save(net.state_dict(), '%s/net_%03d.pth' % (opt.module_save.path, i_epoch + 1))
+            torch.save(net.state_dict(), '%s/best_net.pth' % (self.log_dir))

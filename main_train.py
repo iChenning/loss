@@ -7,6 +7,7 @@ from importlib.machinery import SourceFileLoader
 from utils.my_dataset import dataloader
 from moduls.modul import Net
 from moduls.loss import Loss
+from utils.log import Log
 
 # ========================    开始训练    ========================
 if __name__ == "__main__":
@@ -28,12 +29,9 @@ if __name__ == "__main__":
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, opt.lr_mul, gamma=opt.lr_gamma)
 
     # ========================     设置log路径 ======================
-    from utils.log import Log
-
     log = Log(opt)
 
     # ========================   训练及测试   =======================
-    best_acc = 0.60
     for i_epoch in range(opt.train.max_epoch):
         # --------------------   训练     -------------------------
         net.train()
@@ -46,7 +44,7 @@ if __name__ == "__main__":
             img, label = img.to(opt.device), label.to(opt.device)
 
             optimizer.zero_grad()
-            x = net(img, label, is_train=True)
+            x = net(img, label, is_train=True)[0]
             loss_info = criterion(x, label)
             loss = loss_info[0]
             loss.backward()
@@ -64,7 +62,7 @@ if __name__ == "__main__":
                 img, label = data
                 img, label = img.to(opt.device), label.to(opt.device)
 
-                x = net(img, label, is_train=False)
+                x = net(img, label, is_train=False)[0]
 
                 log.update(x, label)
             log.log_test(net, opt, i_epoch, trainloader_len)
