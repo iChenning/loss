@@ -10,21 +10,24 @@ def dataloader(opt):
     if opt.read_data.is_disk:
         trainset = MyDataset(txt_path=read_train.file_path, transform=read_train.transforms)
     else:
-        trainset = torchvision.datasets.CIFAR10(root='./Data', train=True, download=False, transform=read_train.transforms)  # 训练数据集
+        trainset = torchvision.datasets.CIFAR10(root='./Data', train=True, download=False,
+                                                transform=read_train.transforms)  # 训练数据集
     trainloader = DataLoader(trainset, batch_size=read_train.batch_size, shuffle=read_train.shuffle)
 
     read_test = opt.read_data.test
     if opt.read_data.is_disk:
         testset = MyDataset(txt_path=read_test.file_path, transform=read_test.transforms)
     else:
-        testset = torchvision.datasets.CIFAR10(root='./Data', train=False, download=False, transform=read_test.transforms)
+        testset = torchvision.datasets.CIFAR10(root='./Data', train=False, download=False,
+                                               transform=read_test.transforms)
     testloader = DataLoader(testset, batch_size=read_test.batch_size, shuffle=read_test.shuffle)
 
     return (trainloader, testloader)
 
+
 class MyDataset(Dataset):
     def __init__(self, txt_path, transform=None, target_transform=None):
-        assert os.path.exists(txt_path), "不存在"+txt_path
+        assert os.path.exists(txt_path), "不存在" + txt_path
         f = open(txt_path, 'r')
         imgs = []
         for line in f:
@@ -43,7 +46,7 @@ class MyDataset(Dataset):
         if self.transform is not None:
             img = self.transform(img)
 
-        return (img,label)
+        return (img, label)
 
     def __len__(self):
         return len(self.imgs)
@@ -51,7 +54,7 @@ class MyDataset(Dataset):
 
 class MyDatasetOfBYOL(Dataset):
     def __init__(self, txt_path, transform=None, target_transform=None):
-        assert os.path.exists(txt_path), "不存在"+txt_path
+        assert os.path.exists(txt_path), "不存在" + txt_path
         f = open(txt_path, 'r')
         imgs = []
         for line in f:

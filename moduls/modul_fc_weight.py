@@ -50,10 +50,10 @@ class CosAddMargin(nn.Module):
             one_hot = torch.zeros(cosine.size(), device=self.device)
             one_hot.scatter_(1, label.view(-1, 1).long(), 1)
             output = (one_hot * phi) + (
-                        (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
+                    (1.0 - one_hot) * cosine)  # you can use torch.where if your torch.__version__ is 0.4
             output *= self.scale
         else:
-            output = F.linear(F.normalize(input), F.normalize(self.fc)) *self.scale
+            output = F.linear(F.normalize(input), F.normalize(self.fc)) * self.scale
         return output
 
 

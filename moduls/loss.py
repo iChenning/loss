@@ -1,6 +1,7 @@
 import torch.nn as nn
 from moduls.loss_center import Center
 
+
 class Loss(nn.Module):
     def __init__(self, opt):
         super(Loss, self).__init__()

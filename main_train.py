@@ -8,7 +8,6 @@ from utils.my_dataset import dataloader
 from moduls.modul import Net
 from moduls.loss import Loss
 
-
 # ========================    开始训练    ========================
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Loss training with Pytorch")
@@ -30,6 +29,7 @@ if __name__ == "__main__":
 
     # ========================     设置log路径 ======================
     from utils.log import Log
+
     log = Log(opt)
 
     # ========================   训练及测试   =======================

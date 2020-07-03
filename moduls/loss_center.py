@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class Center(nn.Module):
     def __init__(self, opt):
         super(Center, self).__init__()

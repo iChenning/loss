@@ -3,11 +3,13 @@ import torch
 from datetime import datetime
 from tensorboardX import SummaryWriter
 
+
 class Log():
     def __init__(self, opt):
         now_time = datetime.now()
         time_str = datetime.strftime(now_time, '%m-%d_%H-%M-%S')
-        self.log_dir = os.path.join('log', opt.train.feature_net + '-' + opt.train.fc_type + '-' + opt.train.loss_type + '_' + time_str)
+        self.log_dir = os.path.join('log',
+                                    opt.train.feature_net + '-' + opt.train.fc_type + '-' + opt.train.loss_type + '_' + time_str)
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
 
@@ -37,7 +39,7 @@ class Log():
         self.neg_x_max = torch.max(x_s) / self.scale
         self.neg_x_min = torch.min(x_s) / self.scale
 
-    def log_train(self,scheduler, loss_info, opt, i_epoch, i_iter, trainloader_len):
+    def log_train(self, scheduler, loss_info, opt, i_epoch, i_iter, trainloader_len):
         if len(loss_info) > 1:
             print("Training: Epoch[{:0>3}/{:0>3}] "
                   "Iteration[{:0>3}/{:0>3}] "
@@ -53,7 +55,8 @@ class Log():
                 self.correct / self.total))
             self.writer.add_scalars('Loss_group', {'train_loss': loss_info[0]}, i_epoch * trainloader_len + i_iter)
             self.writer.add_scalars('Loss_group', {'train_loss_soft': loss_info[1]}, i_epoch * trainloader_len + i_iter)
-            self.writer.add_scalars('Loss_group', {'train_loss_center': loss_info[2]}, i_epoch * trainloader_len + i_iter)
+            self.writer.add_scalars('Loss_group', {'train_loss_center': loss_info[2]},
+                                    i_epoch * trainloader_len + i_iter)
         else:
             print("Training: Epoch[{:0>3}/{:0>3}] "
                   "Iteration[{:0>3}/{:0>3}] "
@@ -66,14 +69,15 @@ class Log():
             self.writer.add_scalars('Loss_group', {'train_loss': loss_info[0]}, i_epoch * trainloader_len + i_iter)
 
         self.writer.add_scalar('learning rate', scheduler.get_lr()[0], i_epoch * trainloader_len + i_iter)
-        self.writer.add_scalars('Accuracy_group', {'train_acc': self.correct / self.total}, i_epoch * trainloader_len + i_iter)
+        self.writer.add_scalars('Accuracy_group', {'train_acc': self.correct / self.total},
+                                i_epoch * trainloader_len + i_iter)
 
         self.writer.add_scalars('x_group', {'pos_x_max': self.pos_x_max}, i_epoch * trainloader_len + i_iter)
         self.writer.add_scalars('x_group', {'pos_x_min': self.pos_x_min}, i_epoch * trainloader_len + i_iter)
         self.writer.add_scalars('x_group', {'neg_x_max': self.neg_x_max}, i_epoch * trainloader_len + i_iter)
         self.writer.add_scalars('x_group', {'neg_x_min': self.neg_x_min}, i_epoch * trainloader_len + i_iter)
 
-    def log_test(self,net, opt, i_epoch, trainloader_len):
+    def log_test(self, net, opt, i_epoch, trainloader_len):
         acc = self.correct / self.total
         print("testing acc:{:.3%} ".format(acc))
         self.writer.add_scalars('Accuracy_group', {'test_acc': acc}, (i_epoch + 1) * trainloader_len)

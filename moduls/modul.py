@@ -1,5 +1,6 @@
 import torch.nn as nn
 
+
 class Net(nn.Module):
     def __init__(self, opt):
         super(Net, self).__init__()

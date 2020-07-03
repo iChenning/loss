@@ -165,5 +165,4 @@ if __name__ == "__main__":
 
         print('Saving model......')
         torch.save(byol.state_dict(), '%s/net_%03d.pth' % (opt.module_save.path, i_epoch + 1))
-
     print("训练完成")
