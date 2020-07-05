@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch.nn.functional as F
 
 class Net5(nn.Module):
     def __init__(self):
@@ -46,5 +47,6 @@ class Net5(nn.Module):
         x = self.conv5(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
+        x = F.normalize(x, p=2, dim=1)
 
         return x

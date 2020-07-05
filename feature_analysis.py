@@ -20,29 +20,31 @@ if __name__ == "__main__":
 
     # ========================    导入网络    ========================
     net = Net(opt).to(opt.device)
-    net.load_state_dict(torch.load("./model/net_175.pth"))
+    net.load_state_dict(torch.load("./log/Net5-Cos-standard_07-03_22-28-43/best_net.pth"))
     # for name,pars in net.named_parameters():
     #     print(name,pars)
 
     # ========================   提取特征   =======================
     feature_extract = np.random.rand(50000, 128)
-    for i_iter, data in enumerate(trainloader):
-        img, label = data
-        img, label = img.to(opt.device), label.to(opt.device)
+    net.eval()
+    with torch.no_grad():
+        for i_iter, data in enumerate(trainloader):
+            img, label = data
+            img, label = img.to(opt.device), label.to(opt.device)
 
-        x = net(img, label, is_train=False)[1]
+            x = net(img, label, is_train=False)[1]
 
-        feature_extract[opt.read_data.train.batch_size * i_iter : opt.read_data.train.batch_size * (i_iter + 1), :] = x.cpu().data.numpy()
+            feature_extract[opt.read_data.train.batch_size * i_iter : opt.read_data.train.batch_size * (i_iter + 1), :] = x.cpu().data.numpy()
 
-        # if i_iter == 0:
-        #     feature_extract = x
-        #     labels = label
-        # else:
-        #     feature_extract = torch.cat([feature_extract, x], dim=0)
-        #     labels = torch.cat([labels, label], dim = 0)
+            # if i_iter == 0:
+            #     feature_extract = x
+            #     labels = label
+            # else:
+            #     feature_extract = torch.cat([feature_extract, x], dim=0)
+            #     labels = torch.cat([labels, label], dim = 0)
 
-        print("当前提取进度：", i_iter)
-    feature_extract = torch.from_numpy(feature_extract)
+            print("当前提取进度：", i_iter)
+        feature_extract = torch.from_numpy(feature_extract)
 
     # ========================   计算权重   =========================
     for i in range(1,11):
@@ -65,6 +67,7 @@ if __name__ == "__main__":
     median_correct = 0
     origin_correct = 0
     total = 0
+    net.eval()
     for i_iter, data in enumerate(testloader):
         img, label = data
         img, label = img.to(opt.device), label.to(opt.device)
@@ -85,3 +88,4 @@ if __name__ == "__main__":
     print("mean_acc:", mean_correct / total)
     print("median_acc:", median_correct / total)
     print("origin_acc:", origin_correct / total)
+

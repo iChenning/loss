@@ -22,6 +22,7 @@ if __name__ == "__main__":
 
     # ========================    导入网络    ========================
     net = Net(opt).to(opt.device)
+    net.load_state_dict(torch.load("./log/Net5-Cos-standard_07-03_22-28-43/best_net.pth"))
     criterion = Loss(opt).to(opt.device)
 
     # ========================    初始化优化器 =======================

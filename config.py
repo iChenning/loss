@@ -27,9 +27,9 @@ opt.read_data.test.shuffle = False
 
 # ========================   训练&测试   ============================
 opt.train = edict()
-opt.train.feature_net = 'ACRes26'  # 'Net5' 'Resnet22' 'Resnet26' 'ACRes26'
+opt.train.feature_net = 'Net5'  # 'Net5' 'Resnet22' 'Resnet26' 'ACRes26'
 
-fc_type = 'CosAddMargin'  # 'Dot' 'Cos' 'CosAddMargin'
+fc_type = 'Cos'  # 'Dot' 'Cos' 'CosAddMargin'
 if fc_type == 'Dot':
     opt.train.fc_type = 'Dot'
 elif fc_type == 'Cos':
@@ -40,7 +40,7 @@ elif fc_type == 'CosAddMargin':
     opt.train.scale = 100.0
     opt.train.margin = 0.2
 
-opt.train.loss_type = 'add_center'  # 'standard' 'add_center'
+opt.train.loss_type = 'standard'  # 'standard' 'add_center'
 
 opt.train.max_epoch = 200
 opt.lr_mul = [80, 135, 170]
