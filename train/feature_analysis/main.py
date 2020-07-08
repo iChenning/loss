@@ -21,8 +21,6 @@ if __name__ == "__main__":
     # ========================    导入网络    ========================
     net = Net(opt).to(opt.device)
     net.load_state_dict(torch.load("./log/Net5-Cos-standard_07-03_22-28-43/best_net.pth"))
-    # for name,pars in net.named_parameters():
-    #     print(name,pars)
 
     # ========================   提取特征   =======================
     feature_extract = np.random.rand(50000, 128)
@@ -35,13 +33,6 @@ if __name__ == "__main__":
             x = net(img, label, is_train=False)[1]
 
             feature_extract[opt.read_data.train.batch_size * i_iter : opt.read_data.train.batch_size * (i_iter + 1), :] = x.cpu().data.numpy()
-
-            # if i_iter == 0:
-            #     feature_extract = x
-            #     labels = label
-            # else:
-            #     feature_extract = torch.cat([feature_extract, x], dim=0)
-            #     labels = torch.cat([labels, label], dim = 0)
 
             print("当前提取进度：", i_iter)
         feature_extract = torch.from_numpy(feature_extract)
@@ -57,10 +48,6 @@ if __name__ == "__main__":
             weight_mean = torch.cat([weight_mean, temp_mean], dim=0)
             temp_median = torch.median(temp, dim=0).values.view(1,-1)
             weight_median = torch.cat([weight_median, temp_median], dim=0)
-    # print("mean:")
-    # print(weight_mean)
-    # print("median:")
-    # print(weight_median)
 
     # ========================  测试计算   ==========================
     mean_correct = 0

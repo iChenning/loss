@@ -153,6 +153,7 @@ class ACRes(nn.Module):
         out = self.layer6(out)
         out = out.view(out.size(0), -1)
         out = self.fc(out)
+
         return out
 
 

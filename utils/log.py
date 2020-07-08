@@ -86,7 +86,7 @@ class Log():
             f_best_acc = open(self.log_dir + "/best_acc.txt", 'w')
             f_best_acc.write("EPOCH=%d,best_acc= %.3f%%" % (i_epoch + 1, acc * 100.0))
             f_best_acc.close()
-            self.best_acc = acc
+            self.best_correct = acc
 
             print('Saving model......')
             torch.save(net.state_dict(), '%s/best_net.pth' % (self.log_dir))
