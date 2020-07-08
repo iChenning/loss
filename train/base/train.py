@@ -11,6 +11,7 @@ from utils.log import Log
 
 # ========================    开始训练    ========================
 if __name__ == "__main__":
+    print("当前工作路径为:",os.getcwd())
     parser = argparse.ArgumentParser("Loss training with Pytorch")
     parser.add_argument("--config", help="config file", required=True)
     args = parser.parse_args()
@@ -22,7 +23,8 @@ if __name__ == "__main__":
 
     # ========================    导入网络    ========================
     net = Net(opt).to(opt.device)
-    net.load_state_dict(torch.load("./log/Net5-Cos-standard_07-03_22-28-43/best_net.pth"))
+    if opt.train.is_net_load:
+        net.load_state_dict(torch.load(opt.train.net_path))
     criterion = Loss(opt).to(opt.device)
 
     # ========================    初始化优化器 =======================

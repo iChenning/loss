@@ -20,10 +20,11 @@ class Log():
             self.scale = opt.train.scale
         self.device = opt.device
 
+        self.best_acc = 0.6
+
     def init(self):
         self.correct = 0
         self.total = 0
-        self.best_correct = 0.6
 
     def update(self, x, label):
         _, predicted = torch.max(x.data, 1)
@@ -82,11 +83,12 @@ class Log():
         print("testing acc:{:.3%} ".format(acc))
         self.writer.add_scalars('Accuracy_group', {'test_acc': acc}, (i_epoch + 1) * trainloader_len)
 
-        if acc > self.best_correct:
+        if acc > self.best_acc:
             f_best_acc = open(self.log_dir + "/best_acc.txt", 'w')
             f_best_acc.write("EPOCH=%d,best_acc= %.3f%%" % (i_epoch + 1, acc * 100.0))
             f_best_acc.close()
-            self.best_correct = acc
+            self.best_acc = acc
+            print(self.best_acc)
 
             print('Saving model......')
             torch.save(net.state_dict(), '%s/best_net.pth' % (self.log_dir))
