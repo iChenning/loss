@@ -25,6 +25,7 @@ if __name__ == "__main__":
     net = Net(opt).to(opt.device)
     if opt.train.is_net_load:
         net.load_state_dict(torch.load(opt.train.net_path))
+        print("模型导入成功！")
     criterion = Loss(opt).to(opt.device)
 
     # ========================    初始化优化器 =======================
