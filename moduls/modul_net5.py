@@ -1,5 +1,7 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 
 # class Net5(nn.Module):
 #     def __init__(self):
@@ -104,14 +106,14 @@ class Net5(nn.Module):
     def forward(self, x):
         x_all = self.ZeroPad_all(x)
         x_all = self.side_all(x_all)
-        x_21 = self.ZeroPad_21(x)
-        x_21 = self.side_all(x_21)
+        x_211 = self.ZeroPad_21(x)
+        x_21 = self.side_21(x_211)
         x_22 = self.ZeroPad_22(x)
-        x_22 = self.side_all(x_22)
+        x_22 = self.side_22(x_22)
         x_23 = self.ZeroPad_23(x)
-        x_23 = self.side_all(x_23)
+        x_23 = self.side_23(x_23)
         x_24 = self.ZeroPad_24(x)
-        x_24 = self.side_all(x_24)
+        x_24 = self.side_24(x_24)
         out_merge = torch.cat([x_all, x_21, x_22, x_23, x_24], dim=1)
         x = self.attendtion(out_merge)
 
