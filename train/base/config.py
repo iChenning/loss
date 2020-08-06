@@ -50,4 +50,4 @@ else:
 
 opt.train.max_epoch = 200
 opt.lr_mul = [80, 135, 170]
-opt.lr_gamma = 0.001
+opt.lr_gamma = 0.1
