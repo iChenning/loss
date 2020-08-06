@@ -5,6 +5,7 @@ class Net(nn.Module):
     def __init__(self, opt):
         super(Net, self).__init__()
         from moduls.modul_net5 import Net5
+        from moduls.modul_SideNet5 import SideNet5
         from moduls.modul_resnet22 import ResNet22
         from moduls.modul_resnet26 import ResNet26
         from moduls.modul_ACRes26 import ACRes26
@@ -12,6 +13,8 @@ class Net(nn.Module):
 
         if opt.train.feature_net == 'Net5':
             self.feature_net = Net5()
+        elif opt.train.feature_net == 'SideNet5':
+            self.feature_net = SideNet5()
         elif opt.train.feature_net == 'Resnet22':
             self.feature_net = ResNet22()
         elif opt.train.feature_net == 'Resnet26':

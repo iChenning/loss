@@ -7,7 +7,7 @@ opt = edict()
 opt.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.backends.cudnn.benchmark = True
 if torch.cuda.device_count() >= 8:
-    torch.cuda.set_device(7)                                   # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+    torch.cuda.set_device(7)  # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 opt.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
@@ -27,7 +27,7 @@ opt.read_data.test.shuffle = False
 
 # ========================   训练&测试   ============================
 opt.train = edict()
-opt.train.feature_net = 'Net5'  # 'Net5' 'Resnet22' 'Resnet26' 'ACRes26'
+opt.train.feature_net = 'SideNet5'  # 'Net5' 'SideNet5' 'Resnet22' 'Resnet26' 'ACRes26'
 
 fc_type = 'Dot'  # 'Dot' 'Cos' 'CosAddMargin'
 if fc_type == 'Dot':
@@ -42,12 +42,14 @@ elif fc_type == 'CosAddMargin':
 
 opt.train.loss_type = 'standard'  # 'standard' 'add_center'
 
-opt.train.is_net_load = False # True False
+opt.train.is_net_load = False  # True False
 if opt.train.is_net_load:
     opt.train.net_path = 'log/Resnet22-Cos-standard_07-08_19-03-38/best_net.pth'
 else:
     opt.train.net_path = None
 
 opt.train.max_epoch = 200
-opt.lr_mul = [80, 135, 170]
-opt.lr_gamma = 0.1
+# opt.lr_mul = [80, 135, 170]
+# opt.lr_gamma = 0.1
+opt.lr_mul = [40, 60, 75, 90, 110, 130, 150, 170, 180, 190]
+opt.lr_gamma = 0.5

@@ -80,15 +80,14 @@ class Log():
 
     def log_test(self, net, opt, i_epoch, trainloader_len):
         acc = self.correct / self.total
-        print("testing acc:{:.3%} ".format(acc))
+        print("testing acc:{:.3%},  best acc:{:.3%} ".format(acc, max(acc, self.best_acc)))
         self.writer.add_scalars('Accuracy_group', {'test_acc': acc}, (i_epoch + 1) * trainloader_len)
 
         if acc > self.best_acc:
-            f_best_acc = open(self.log_dir + "/best_acc.txt", 'w')
-            f_best_acc.write("EPOCH=%d,best_acc= %.3f%%" % (i_epoch + 1, acc * 100.0))
+            f_best_acc = open(self.log_dir + "/best_acc.txt", 'a')
+            f_best_acc.write("EPOCH=%d,best_acc= %.3f%%\n" % (i_epoch + 1, acc * 100.0))
             f_best_acc.close()
             self.best_acc = acc
-            print(self.best_acc)
 
             print('Saving model......')
             torch.save(net.state_dict(), '%s/best_net.pth' % (self.log_dir))
