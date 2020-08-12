@@ -4,8 +4,9 @@ import torch.nn.functional as F
 
 
 class SideNet5(nn.Module):
-    def __init__(self):
+    def __init__(self, opt):
         super(SideNet5, self).__init__()
+        self.is_side1 = opt.is_side1
         self.side1 = self.__side_net(3, win_size=3, is_bn=False, is_act=True)
         self.conv1 = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False),
@@ -13,6 +14,7 @@ class SideNet5(nn.Module):
             nn.ReLU(inplace=True),
             nn.AvgPool2d(kernel_size=3, stride=2, padding=1)
         )
+        self.is_side2 = opt.is_side2
         self.side2 = self.__side_net(64, win_size=3, is_bn=False, is_act=True)
         self.conv2 = nn.Sequential(
             nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1, bias=False),
@@ -20,6 +22,7 @@ class SideNet5(nn.Module):
             nn.ReLU(inplace=True),
             nn.AvgPool2d(kernel_size=3, stride=2, padding=1)
         )
+        self.is_side3 = opt.is_side3
         self.side3 = self.__side_net(128, win_size=3, is_bn=False, is_act=True)
         self.conv3 = nn.Sequential(
             nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1, bias=False),
@@ -45,11 +48,14 @@ class SideNet5(nn.Module):
         )
 
     def forward(self, x):
-        x = self.side1(x)
+        if self.is_side1:
+            x = self.side1(x)
         x = self.conv1(x)
-        x = self.side2(x)
+        if self.is_side2:
+            x = self.side2(x)
         x = self.conv2(x)
-        x = self.side3(x)
+        if self.is_side3:
+            x = self.side3(x)
         x = self.conv3(x)
         x = self.conv4(x)
         x = self.conv5(x)

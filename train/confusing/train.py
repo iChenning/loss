@@ -5,8 +5,13 @@ import argparse
 from importlib.machinery import SourceFileLoader
 
 from utils.my_dataset import dataloader
-from moduls.modul import Net
-from moduls.loss import Loss
+from moduls.modul_net5 import Net5
+from moduls.modul_SideNet5 import SideNet5
+from moduls.modul_resnet22 import ResNet22
+from moduls.modul_SideRes22 import SideResNet22
+from moduls.modul_resnet26 import ResNet26
+from moduls.modul_ACRes26 import ACRes26
+from moduls.modul_fc_weight import Dot, Cos, CosAddMargin
 from utils.log import Log
 
 # ========================    开始训练    ========================
@@ -22,11 +27,25 @@ if __name__ == "__main__":
     trainloader, testloader = dataloader(opt)
 
     # ========================    导入网络    ========================
-    net = Net(opt).to(opt.device)
-    if opt.train.is_net_load:
-        net.load_state_dict(torch.load(opt.train.net_path))
-        print("模型导入成功！")
-    criterion = Loss(opt).to(opt.device)
+    if opt.train.feature_net == 'Net5':
+        encoder = Net5().to(opt.device)
+    elif opt.train.feature_net == 'Net5_Side':
+        encoder = SideNet5(opt).to(opt.device)
+    elif opt.train.feature_net == 'Resnet22':
+        encoder = ResNet22().to(opt.device)
+    elif opt.train.feature_net == 'Res22_Side':
+        encoder = SideResNet22(opt).to(opt.device)
+    elif opt.train.feature_net == 'Resnet26':
+        encoder = ResNet26().to(opt.device)
+    else:
+        encoder = ACRes26().to(opt.device)
+
+    if opt.train.fc_type == 'Cos':
+        fc = Cos(opt)
+    elif opt.train.fc_type == 'CosAddMargin':
+        fc = CosAddMargin(opt)
+    else:
+        fc = Dot(opt)
 
     # ========================    初始化优化器 =======================
     optimizer = optim.SGD(net.parameters(), lr=opt.lr_init, momentum=0.9, weight_decay=0.0003)

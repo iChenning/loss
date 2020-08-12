@@ -17,14 +17,22 @@ class GaussianBlur(object):
 
 
 def transform():
-    # train_transforms = transforms.Compose([
-    #     transforms.RandomHorizontalFlip(p=0.5),
-    #     transforms.RandomCrop(32, padding=4),
-    #     transforms.ToTensor(),
-    #     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-    # ])
-
     train_transforms = transforms.Compose([
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomCrop(32, padding=4),
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+    ])
+
+    test_transforms = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+    ])
+
+    return (train_transforms, test_transforms)
+
+def transform_unsuper():
+    train_transforms_unsuper = transforms.Compose([
         transforms.RandomHorizontalFlip(p=0.5),
         transforms.RandomResizedCrop(32, scale=(0.5, 1.)),
         transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2),
@@ -39,4 +47,4 @@ def transform():
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
     ])
 
-    return (train_transforms, test_transforms)
+    return (train_transforms_unsuper, test_transforms)

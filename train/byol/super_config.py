@@ -7,7 +7,7 @@ opt = edict()
 opt.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.backends.cudnn.benchmark = True
 if torch.cuda.device_count() >= 4:
-    torch.cuda.set_device(2)  # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+    torch.cuda.set_device(0)  # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 opt.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
@@ -17,7 +17,7 @@ opt.read_data.is_disk = True  # True False
 
 opt.read_data.train = edict()
 opt.read_data.train.file_path = "Data/train.txt"
-opt.read_data.train.batch_size = 250
+opt.read_data.train.batch_size = 1000
 opt.read_data.train.shuffle = True
 
 opt.read_data.test = edict()
@@ -26,13 +26,13 @@ opt.read_data.test.batch_size = 250
 opt.read_data.test.shuffle = False
 
 # ========================   训练&测试   ============================
-opt.is_side1 = False  # True False
-opt.is_side2 = False  # True False
-opt.is_side3 = False  # True False
-opt.log_name = ''  # None
+opt.is_side1 = True  # True False
+opt.is_side2 = True  # True False
+opt.is_side3 = True  # True False
+opt.log_name = 'super_byol'  # None
 
 opt.train = edict()
-opt.train.feature_net = 'Resnet22'  # 'Net5' 'Net5_Side' 'Resnet22' 'Res22_Side' 'Resnet26' 'ACRes26'
+opt.train.feature_net = 'Res22_Side'  # 'Net5' 'Net5_Side' 'Resnet22' 'Res22_Side' 'Resnet26' 'ACRes26'
 fc_type = 'Dot'  # 'Dot' 'Cos' 'CosAddMargin'
 if fc_type == 'Dot':
     opt.train.fc_type = 'Dot'

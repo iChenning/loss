@@ -16,12 +16,12 @@ opt.read_data = edict()
 opt.read_data.is_disk = True  # True False
 
 opt.read_data.train = edict()
-opt.read_data.train.file_path = "../../Data/train.txt"
+opt.read_data.train.file_path = "Data/train.txt"
 opt.read_data.train.batch_size = 500
 opt.read_data.train.shuffle = False
 
 opt.read_data.test = edict()
-opt.read_data.test.file_path = "../../Data/test.txt"
+opt.read_data.test.file_path = "Data/test.txt"
 opt.read_data.test.batch_size = 500
 opt.read_data.test.shuffle = False
 
@@ -29,7 +29,7 @@ opt.read_data.test.shuffle = False
 opt.train = edict()
 opt.train.feature_net = 'Net5'  # 'Net5' 'Resnet22' 'Resnet26' 'ACRes26'
 
-fc_type = 'Cos'  # 'Dot' 'Cos' 'CosAddMargin'
+fc_type = 'Dot'  # 'Dot' 'Cos' 'CosAddMargin'
 if fc_type == 'Dot':
     opt.train.fc_type = 'Dot'
 elif fc_type == 'Cos':

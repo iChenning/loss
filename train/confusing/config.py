@@ -32,7 +32,7 @@ opt.is_side3 = False  # True False
 opt.log_name = ''  # None
 
 opt.train = edict()
-opt.train.feature_net = 'Resnet22'  # 'Net5' 'Net5_Side' 'Resnet22' 'Res22_Side' 'Resnet26' 'ACRes26'
+opt.train.feature_net = 'Res22_Side'  # 'Net5' 'Net5_Side' 'Resnet22' 'Res22_Side' 'Resnet26' 'ACRes26'
 fc_type = 'Dot'  # 'Dot' 'Cos' 'CosAddMargin'
 if fc_type == 'Dot':
     opt.train.fc_type = 'Dot'

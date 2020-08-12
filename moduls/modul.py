@@ -7,16 +7,19 @@ class Net(nn.Module):
         from moduls.modul_net5 import Net5
         from moduls.modul_SideNet5 import SideNet5
         from moduls.modul_resnet22 import ResNet22
+        from moduls.modul_SideRes22 import SideResNet22
         from moduls.modul_resnet26 import ResNet26
         from moduls.modul_ACRes26 import ACRes26
         from moduls.modul_fc_weight import Dot, Cos, CosAddMargin
 
         if opt.train.feature_net == 'Net5':
             self.feature_net = Net5()
-        elif opt.train.feature_net == 'SideNet5':
-            self.feature_net = SideNet5()
+        elif opt.train.feature_net == 'Net5_Side':
+            self.feature_net = SideNet5(opt)
         elif opt.train.feature_net == 'Resnet22':
             self.feature_net = ResNet22()
+        elif opt.train.feature_net == 'Res22_Side':
+            self.feature_net = SideResNet22(opt)
         elif opt.train.feature_net == 'Resnet26':
             self.feature_net = ResNet26()
         else:

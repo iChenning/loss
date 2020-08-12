@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     # ========================    导入网络    ========================
     net = Net(opt).to(opt.device)
-    net.load_state_dict(torch.load("./log/Net5-Cos-standard_07-03_22-28-43/best_net.pth"))
+    net.load_state_dict(torch.load("./log/Net5-Dot-standard/best_net.pth"))
 
     # ========================   提取特征   =======================
     feature_extract = np.random.rand(50000, 128)

@@ -8,8 +8,12 @@ class Log():
     def __init__(self, opt):
         now_time = datetime.now()
         time_str = datetime.strftime(now_time, '%m-%d_%H-%M-%S')
-        self.log_dir = os.path.join('log',
-                                    opt.train.feature_net + '-' + opt.train.fc_type + '-' + opt.train.loss_type + '_' + time_str)
+        if opt.log_name == None:
+            self.log_dir = os.path.join('log',
+                                        opt.train.feature_net + '-' + opt.train.fc_type + '-' + opt.train.loss_type + '_' + time_str)
+        else:
+            self.log_dir = os.path.join('log',
+                                        opt.train.feature_net + opt.log_name + '-' + opt.train.fc_type + '-' + opt.train.loss_type)
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
 
@@ -40,7 +44,7 @@ class Log():
         self.neg_x_max = torch.max(x_s) / self.scale
         self.neg_x_min = torch.min(x_s) / self.scale
 
-    def log_train(self, scheduler, loss_info, opt, i_epoch, i_iter, trainloader_len):
+    def log_train(self, optimizer, loss_info, opt, i_epoch, i_iter, trainloader_len):
         if len(loss_info) > 1:
             print("Training: Epoch[{:0>3}/{:0>3}] "
                   "Iteration[{:0>3}/{:0>3}] "
@@ -69,7 +73,8 @@ class Log():
                 self.correct / self.total))
             self.writer.add_scalars('Loss_group', {'train_loss': loss_info[0]}, i_epoch * trainloader_len + i_iter)
 
-        self.writer.add_scalar('learning rate', scheduler.get_lr()[0], i_epoch * trainloader_len + i_iter)
+        self.writer.add_scalar('learning rate', optimizer.state_dict()['param_groups'][0]['lr'],
+                               i_epoch * trainloader_len + i_iter)
         self.writer.add_scalars('Accuracy_group', {'train_acc': self.correct / self.total},
                                 i_epoch * trainloader_len + i_iter)
 

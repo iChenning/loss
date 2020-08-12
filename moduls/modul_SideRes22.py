@@ -26,8 +26,9 @@ class ResidualBlock(nn.Module):
         return out
 
 class ResNet(nn.Module):
-    def __init__(self, ResidualBlock, num_classes=128):
+    def __init__(self, ResidualBlock, opt, num_classes=128):
         super(ResNet, self).__init__()
+        self.is_side1 = opt.is_side1
         self.side1 = self.__side_net(3, win_size=3, is_bn=False, is_act=True)
         self.inchannel = 64
         self.conv1 = nn.Sequential(
@@ -36,8 +37,11 @@ class ResNet(nn.Module):
             nn.ReLU(inplace=True),
         )
         self.layer1 = self.make_layer(ResidualBlock, 64,  2, stride=2)
+        self.is_side2 = opt.is_side2
         self.side2 = self.__side_net(64, win_size=3, is_bn=False, is_act=True)
         self.layer2 = self.make_layer(ResidualBlock, 128, 2, stride=2)
+        self.is_side3 = opt.is_side3
+        self.side3 = self.__side_net(128, win_size=3, is_bn=False, is_act=True)
         self.layer3 = self.make_layer(ResidualBlock, 256, 2, stride=2)
         self.layer4 = self.make_layer(ResidualBlock, 512, 2, stride=2)
         self.layer5 = self.make_layer(ResidualBlock, 1024, 2, stride=2)
@@ -55,15 +59,20 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        if self.is_side1:
+            x = self.side1(x)
         out = self.conv1(x)
         out = self.layer1(out)
+        if self.is_side2:
+            out = self.side2(out)
         out = self.layer2(out)
+        if self.is_side3:
+            out = self.side3(out)
         out = self.layer3(out)
         out = self.layer4(out)
         out = self.layer5(out)
         out = out.view(out.size(0), -1)
         out = self.fc(out)
-        # out = F.normalize(out, p=2, dim=1)
         return out
 
     def __side_net(self, channels, win_size=3, is_bn=False, is_act=True):
@@ -71,5 +80,5 @@ class ResNet(nn.Module):
         side = Side(channels, win_size, is_bn, is_act)
         return side
 
-def ResNet22():
-    return ResNet(ResidualBlock)
+def SideResNet22(opt):
+    return ResNet(ResidualBlock, opt)
