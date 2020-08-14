@@ -36,17 +36,17 @@ class ResNet(nn.Module):
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
         )
-        self.layer1 = self.make_layer(ResidualBlock, 64,  2, stride=2)  # 64*16*16
+        self.layer1 = self.make_layer(ResidualBlock, 64,  2, stride=1)  # 64*32*32
         self.is_side2 = opt.is_side2
         self.side2 = self.__side_net(64, win_size=3, is_bn=False, is_act=True)
-        self.layer2 = self.make_layer(ResidualBlock, 128, 2, stride=2)  # 128*8*8
+        self.layer2 = self.make_layer(ResidualBlock, 128, 2, stride=2)  # 128*16*16
         self.is_side3 = opt.is_side3
         self.side3 = self.__side_net(128, win_size=3, is_bn=False, is_act=True)
-        self.layer3 = self.make_layer(ResidualBlock, 256, 2, stride=2)  # 256*4*4
-        self.layer4 = self.make_layer(ResidualBlock, 512, 2, stride=2)  # 512*2*2
-        self.layer5 = self.make_layer(ResidualBlock, 1024, 2, stride=2)  # 1024*1*1
+        self.layer3 = self.make_layer(ResidualBlock, 256, 2, stride=2)  # 256*8*8
+        self.layer4 = self.make_layer(ResidualBlock, 512, 2, stride=2)  # 512*4*4
+        self.avgPool = nn.AdaptiveAvgPool2d((2, 2))  # 512*2*2
         self.fc = nn.Sequential(
-            nn.Linear(1024, num_classes, bias=False),
+            nn.Linear(512*2*2, num_classes, bias=False),
             nn.ReLU(inplace=True)
         )
 
@@ -70,7 +70,7 @@ class ResNet(nn.Module):
             out = self.side3(out)
         out = self.layer3(out)
         out = self.layer4(out)
-        out = self.layer5(out)
+        out = self.avgPool(out)
         out = out.view(out.size(0), -1)
         out = self.fc(out)
         return out
@@ -80,5 +80,6 @@ class ResNet(nn.Module):
         side = Side(channels, win_size, is_bn, is_act)
         return side
 
-def SideResNet22(opt):
+def SideResNet18(opt):
+    print("new!!!")
     return ResNet(ResidualBlock, opt)

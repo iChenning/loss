@@ -131,7 +131,7 @@ if __name__ == "__main__":
 
     # ========================    导入网络    ========================
     byol = BYOL(opt).to(device)
-    byol.load_state_dict(torch.load('log/Res22_Side_super_byol-Dot-standard/net6499.pth'))  # 需修改
+    byol.load_state_dict(torch.load('log/Res22_Side_super_byol-Dot-standard/net39999.pth'))  # 需修改
     print("模型导入成功！")
 
     # ========================   提取特征   =======================

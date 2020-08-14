@@ -26,6 +26,36 @@ def dataloader(opt):
     return (trainloader, testloader)
 
 
+class MyDataset10(Dataset):
+    def __init__(self, txt_path, transform=None, target_transform=None):
+        assert os.path.exists(txt_path), "不存在" + txt_path
+        f = open(txt_path, 'r')
+        imgs = []
+        num = 0
+        for line in f:
+            line = line.rstrip()
+            words = line.split()
+            if num % 5000 < 500:
+                imgs.append((words[0], int(words[1])))
+            num += 1
+
+        self.imgs = imgs
+        self.transform = transform
+        self.target_transform = target_transform
+
+    def __getitem__(self, index):
+        f_path, label = self.imgs[index]
+        img = Image.open(f_path).convert("RGB")
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return (img, label)
+
+    def __len__(self):
+        return len(self.imgs)
+
+
 class MyDataset(Dataset):
     def __init__(self, txt_path, transform=None, target_transform=None):
         assert os.path.exists(txt_path), "不存在" + txt_path
@@ -110,6 +140,41 @@ class unsup_BYOL(Dataset):
             img2 = self.transform(img)
 
         return (img1, img2)
+
+    def __len__(self):
+        return len(self.imgs)
+
+
+class Rotate(Dataset):
+    def __init__(self, txt_path, transform=None, target_transform=None):
+        assert os.path.exists(txt_path), "不存在" + txt_path
+        f = open(txt_path, 'r')
+        imgs = []
+        for line in f:
+            line = line.rstrip()
+            words = line.split()
+            imgs.append((words[0], int(words[1])))
+
+        self.imgs = imgs
+        self.transform = transform
+        self.target_transform = target_transform
+
+    def __getitem__(self, index):
+        f_path, label = self.imgs[index]
+        img = Image.open(f_path).convert("RGB")
+
+        label_rotate = random.choice([0, 1, 2, 3])
+        if label_rotate == 1:
+            img = img.rotate(90)
+        elif label_rotate == 2:
+            img = img.rotate(180)
+        elif label_rotate == 3:
+            img = img.rotate(270)
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return (img, label, label_rotate)
 
     def __len__(self):
         return len(self.imgs)
