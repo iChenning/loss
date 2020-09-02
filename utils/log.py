@@ -1,5 +1,6 @@
 import os
 import torch
+import time
 from datetime import datetime
 from tensorboardX import SummaryWriter
 
@@ -29,8 +30,11 @@ class Log():
     def init(self):
         self.correct = 0
         self.total = 0
+        self.time_start = time.time()
 
     def update(self, x, label):
+        self.time_now = time.time()
+
         _, predicted = torch.max(x.data, 1)
         self.correct += predicted.eq(label.data).cpu().sum().item()
         self.total += label.size(0)
@@ -51,13 +55,15 @@ class Log():
                   "Loss: {:.4f} "
                   "Loss_soft: {:.4f} "
                   "Loss_center: {:.4f} "
-                  "Acc:{:.3%} ".format(
+                  "Acc:{:.3%} "
+                  "Time:{:.2f}h".format(
                 i_epoch + 1, opt.train.max_epoch,
                 i_iter + 1, trainloader_len,
                 loss_info[0].item(),
                 loss_info[1].item(),
                 loss_info[2].item(),
-                self.correct / self.total))
+                self.correct / self.total,
+                (self.time_now - self.time_start) / (i_iter + 1) * trainloader_len * (opt.train.max_epoch - i_epoch) / 3600))
             self.writer.add_scalars('Loss_group', {'train_loss': loss_info[0]}, i_epoch * trainloader_len + i_iter)
             self.writer.add_scalars('Loss_group', {'train_loss_soft': loss_info[1]}, i_epoch * trainloader_len + i_iter)
             self.writer.add_scalars('Loss_group', {'train_loss_center': loss_info[2]},
@@ -65,12 +71,16 @@ class Log():
         else:
             print("Training: Epoch[{:0>3}/{:0>3}] "
                   "Iteration[{:0>3}/{:0>3}] "
+                  "lr: {:.4f}"
                   "Loss: {:.4f} "
-                  "Acc:{:.3%} ".format(
+                  "Acc:{:.3%} "
+                  "Time:{:.2f}h".format(
                 i_epoch + 1, opt.train.max_epoch,
                 i_iter + 1, trainloader_len,
+                optimizer.state_dict()['param_groups'][0]['lr'],
                 loss_info[0].item(),
-                self.correct / self.total))
+                self.correct / self.total,
+                (self.time_now - self.time_start) / (i_iter + 1) * trainloader_len * (opt.train.max_epoch - i_epoch) / 3600))
             self.writer.add_scalars('Loss_group', {'train_loss': loss_info[0]}, i_epoch * trainloader_len + i_iter)
 
         self.writer.add_scalar('learning rate', optimizer.state_dict()['param_groups'][0]['lr'],
@@ -85,7 +95,7 @@ class Log():
 
     def log_test(self, net, opt, i_epoch, trainloader_len):
         acc = self.correct / self.total
-        print("testing acc:{:.3%},  best acc:{:.3%} ".format(acc, max(acc, self.best_acc)))
+        print("valid acc:{:.3%},  best acc:{:.3%} ".format(acc, max(acc, self.best_acc)))
         self.writer.add_scalars('Accuracy_group', {'test_acc': acc}, (i_epoch + 1) * trainloader_len)
 
         if acc > self.best_acc:

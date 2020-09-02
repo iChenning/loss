@@ -3,12 +3,12 @@ from torch.utils.data import DataLoader
 import torchvision
 import os
 from PIL import Image
-from utils.transforms import transform
+from utils.transforms import normal_transforms
 import random
 
 
 def dataloader(opt):
-    train_trans, test_trans = transform()
+    train_trans, test_trans = normal_transforms()
     read_train = opt.read_data.train
     if opt.read_data.is_disk:
         trainset = MyDataset(txt_path=read_train.file_path, transform=train_trans)

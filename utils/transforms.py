@@ -16,7 +16,7 @@ class GaussianBlur(object):
         return np.array(img)
 
 
-def transform():
+def normal_transforms():
     train_transforms = transforms.Compose([
         transforms.RandomHorizontalFlip(p=0.5),
         transforms.RandomCrop(32, padding=4),
