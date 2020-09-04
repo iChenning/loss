@@ -16,7 +16,7 @@ opt.is_side2 = False  # True False
 opt.is_side3 = False  # True False
 opt.log_name = 'shiyan'  # None
 
-opt.train.feature_net = 'Resnet22'  # 'Net5' 'Net5_Side' 'Res18_SideNew' 'Resnet22' 'Res22_Side' 'Resnet26' 'ACRes26'
+opt.train.feature_net = 'Resnet50'  # 'Net5' 'Net5_Side' 'Res18_SideNew' 'Resnet22' 'Res22_Side' 'Resnet26' 'ACRes26'
 fc_type = 'Dot'  # 'Dot' 'Cos' 'CosAddMargin'
 if fc_type == 'Dot':
     opt.train.fc_type = 'Dot'
@@ -41,17 +41,17 @@ opt.data = edict()
 
 opt.data.train = edict()
 opt.data.train.file_path = "/opt/code/Data/cifar10/train.txt"
-opt.data.train.batch_size = 250
+opt.data.train.batch_size = 128
 opt.data.train.shuffle = True
 
 opt.data.valid = edict()
 opt.data.valid.file_path = "/opt/code/Data/cifar10/valid.txt"
-opt.data.valid.batch_size = 1000
+opt.data.valid.batch_size = 128
 opt.data.valid.shuffle = False
 
 opt.data.test = edict()
 opt.data.test.file_path = "/opt/code/Data/cifar10/test.txt"
-opt.data.test.batch_size = 1000
+opt.data.test.batch_size = 128
 opt.data.test.shuffle = False
 
 

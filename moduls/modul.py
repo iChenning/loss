@@ -1,4 +1,6 @@
 import torch.nn as nn
+import torchvision
+import torch
 
 
 class Net(nn.Module):
@@ -31,6 +33,14 @@ class Net(nn.Module):
         else:
             self.feature_net = ACRes26()
 
+        feature_net = torchvision.models.resnet50()
+        feature_net = nn.Sequential(*list(feature_net.children())[: -2])
+        feature_net.add_module('drop_out', nn.Dropout(p=0.4))
+        self.feature_net = feature_net
+        self.feature = nn.Linear(2048 * 7 * 7, 128, bias=False)
+        self.bn = nn.BatchNorm1d(128)
+
+
         self.fc_type = opt.train.fc_type
         if opt.train.fc_type == 'Cos':
             self.fc = Cos(opt)
@@ -41,5 +51,10 @@ class Net(nn.Module):
 
     def forward(self, img, label, is_train=True):
         feature = self.feature_net(img)
+
+        feature = torch.flatten(feature, 1)
+        feature = self.feature(feature)
+        feature = self.bn(feature)
+
         x = self.fc(feature, label, is_train=is_train)
         return (x, feature)
